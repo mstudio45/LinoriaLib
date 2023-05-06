@@ -1674,8 +1674,11 @@ do
                     return false
                 end
 
-                print(Input.UserInputType)
-                if Input.UserInputType ~= Enum.UserInputType.MouseButton1 or Input.UserInputType ~= Enum.UserInputType.Touch then
+                if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+                    return false
+                end
+
+                if Input.UserInputType ~= Enum.UserInputType.Touch then
                     return false
                 end
 

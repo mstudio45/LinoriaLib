@@ -1643,25 +1643,29 @@ do
 
             local function ValidateClick(Input)
                 if Library:MouseIsOverOpenedFrame(Input) then
+                    print("Mouse over opened frame")
                     return false
                 end
 
-                if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then
-                    return false
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    print("MouseButton1 Click")
+                    return true
                 end
 
-                if Input.UserInputType ~= Enum.UserInputType.Touch then
-                    return false
+                if Input.UserInputType == Enum.UserInputType.Touch then
+                    print("Touch Click")
+                    return true
                 end
 
-                return true
+                return false
             end
 
             Button.Outer.InputBegan:Connect(function(Input)
+                print("Button clicked, checking if click valid")
+                print("Click:", (not ValidateClick(Input)))
+                print("Locked:", Button.Locked)
                 if not ValidateClick(Input) then return end
                 if Button.Locked then return end
-
-                print("Clicked a button!")
 
                 if Button.DoubleClick then
                     Library:RemoveFromRegistry(Button.Label)
@@ -3868,7 +3872,7 @@ function Library:CreateWindow(...)
             Parent = ToggleUIInnerFrame;
         });
     
-        Library:MakeDraggable(ToggleUIOuter);
+        --Library:MakeDraggable(ToggleUIOuter);
 
         ToggleUIButton.MouseButton1Down:Connect(function()
             task.spawn(Library.Toggle)

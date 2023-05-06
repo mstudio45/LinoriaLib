@@ -209,7 +209,8 @@ function Library:MakeDraggable(Instance, Cutoff)
                 DraggingStart = Input.Position;
                 StartPosition = Instance.Position;
 
-                if (Input.Position - DraggingStart).Y > (Cutoff or 40) then
+                local OffsetPos = Input.Position - DraggingStart;
+                if OffsetPos.Y > (Cutoff or 40) then
                     Dragging = false;
                     return;
                 end;
@@ -219,13 +220,13 @@ function Library:MakeDraggable(Instance, Cutoff)
         end);
         InputService.TouchMoved:Connect(function(Input)
             if Input == DraggingInput and Dragging and Library.CanDrag == true then
-                local delta = Input.Position - DraggingStart;
+                local OffsetPos = Input.Position - DraggingStart;
 
                 Instance.Position = UDim2.new(
                     StartPosition.X.Scale,
-                    StartPosition.X.Offset + delta.X,
+                    StartPosition.X.Offset + OffsetPos.X,
                     StartPosition.Y.Scale,
-                    StartPosition.Y.Offset + delta.Y
+                    StartPosition.Y.Offset + OffsetPos.Y
                 );
             end;
         end);

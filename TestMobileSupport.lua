@@ -45,6 +45,8 @@ local Library = {
     Signals = {};
     ScreenGui = ScreenGui;
 
+    ActiveTab = nil;
+
     MinSize = Vector2.new(550, 300);
     IsMobile = false;
     DevicePlatform = Enum.Platform.None;
@@ -1650,20 +1652,15 @@ do
                 if Input.UserInputType == Enum.UserInputType.MouseButton1 then
                     print("MouseButton1 Click")
                     return true
-                end
-
-                if Input.UserInputType == Enum.UserInputType.Touch then
+                elseif Input.UserInputType == Enum.UserInputType.Touch then
                     print("Touch Click")
                     return true
+                else
+                    return false
                 end
-
-                return false
             end
 
             Button.Outer.InputBegan:Connect(function(Input)
-                print("Button clicked, checking if click valid")
-                print("Click:", (not ValidateClick(Input)))
-                print("Locked:", Button.Locked)
                 if not ValidateClick(Input) then return end
                 if Button.Locked then return end
 
@@ -2292,6 +2289,18 @@ do
         SliderInner.InputBegan:Connect(function(Input)
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
                 Library.CanDrag = false;
+                local Sides = {};
+                if Library.Window then
+                    Sides = Library.Window.Tabs[Library.ActiveTab]:GetSides();
+                end
+
+                for _, Side in pairs(Sides) do
+                    if typeof(Side) == "Instance" then
+                        if Side:IsA("ScrollingFrame") then
+                            Side.ScrollingEnabled = false;
+                        end
+                    end;
+                end;
 
                 local mPos = Mouse.X;
                 local gPos = Fill.AbsoluteSize.X;
@@ -2317,6 +2326,14 @@ do
                 end;
 
                 Library.CanDrag = true;
+                for _, Side in pairs(Sides) do
+                    if typeof(Side) == "Instance" then
+                        if Side:IsA("ScrollingFrame") then
+                            Side.ScrollingEnabled = true;
+                        end
+                    end;
+                end;
+
                 Library:AttemptSave();
             end;
         end);
@@ -3356,6 +3373,7 @@ function Library:CreateWindow(...)
         end;
 
         function Tab:ShowTab()
+            Library.ActiveTab = Name;
             for _, Tab in next, Window.Tabs do
                 Tab:HideTab();
             end;
@@ -3376,6 +3394,10 @@ function Library:CreateWindow(...)
         function Tab:SetLayoutOrder(Position)
             TabButton.LayoutOrder = Position;
             TabListLayout:ApplyLayout();
+        end;
+
+        function Tab:GetSides()
+            return { ["Left"] = LeftSide, ["Right"] = RightSide };
         end;
 
         function Tab:AddGroupbox(Info)
@@ -3883,6 +3905,7 @@ function Library:CreateWindow(...)
 
     Window.Holder = Outer;
 
+    Library.Window = Window;
     return Window;
 end;
 

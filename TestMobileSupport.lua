@@ -48,7 +48,7 @@ local Library = {
     MinSize = Vector2.new(550, 300);
     IsMobile = false;
     DevicePlatform = Enum.Platform.None;
-    CanDrag = false;
+    CanDrag = true;
 };
 
 pcall(function() Library.DevicePlatform = InputService:GetPlatform(); end); -- For safety so the UI library doesn't error.
@@ -204,20 +204,22 @@ function Library:MakeDraggable(Instance, Cutoff)
         local Dragging, DraggingInput, DraggingStart, StartPosition;
 
         InputService.TouchStarted:Connect(function(Input)
-            if not Dragging then
-                Dragging = true;
+            if not Dragging and Library:IsMouseOverFrame(Instance, Input) then
                 DraggingInput = Input;
                 DraggingStart = Input.Position;
                 StartPosition = Instance.Position;
+
+                if (Input.Position - DraggingStart).Y > (Cutoff or 40) then
+                    Dragging = false;
+                    return;
+                end;
+
+                Dragging = true;
             end;
         end);
         InputService.TouchMoved:Connect(function(Input)
             if Input == DraggingInput and Dragging and Library.CanDrag == true then
                 local delta = Input.Position - DraggingStart;
-
-                if delta.Y > (Cutoff or 40) then
-                    return;
-                end;
 
                 Instance.Position = UDim2.new(
                     StartPosition.X.Scale,
@@ -2284,6 +2286,8 @@ do
 
         SliderInner.InputBegan:Connect(function(Input)
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
+                Library.CanDrag = false;
+
                 local mPos = Mouse.X;
                 local gPos = Fill.AbsoluteSize.X;
                 local Diff = mPos - (Fill.AbsolutePosition.X + gPos);
@@ -2307,6 +2311,7 @@ do
                     RenderStepped:Wait();
                 end;
 
+                Library.CanDrag = true;
                 Library:AttemptSave();
             end;
         end);

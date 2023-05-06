@@ -44,9 +44,11 @@ local Library = {
 
     Signals = {};
     ScreenGui = ScreenGui;
+
     MinSize = Vector2.new(550, 300);
     IsMobile = false;
     DevicePlatform = Enum.Platform.None;
+    CanDrag = false;
 };
 
 pcall(function() Library.DevicePlatform = InputService:GetPlatform(); end); -- For safety so the UI library doesn't error.
@@ -175,7 +177,7 @@ function Library:MakeDraggable(Instance, Cutoff)
     Instance.Active = true;
 
     Instance.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 and Library.CanDrag == true then
             local ObjPos = Vector2.new(
                 Mouse.X - Instance.AbsolutePosition.X,
                 Mouse.Y - Instance.AbsolutePosition.Y
@@ -185,7 +187,7 @@ function Library:MakeDraggable(Instance, Cutoff)
                 return;
             end;
 
-            while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+            while (InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and Library.CanDrag == true) do
                 Instance.Position = UDim2.new(
                     0,
                     Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
@@ -210,8 +212,13 @@ function Library:MakeDraggable(Instance, Cutoff)
             end;
         end);
         InputService.TouchMoved:Connect(function(Input)
-            if Input == DraggingInput and Dragging then
+            if Input == DraggingInput and Dragging and Library.CanDrag == true then
                 local delta = Input.Position - DraggingStart;
+
+                if delta.Y > (Cutoff or 40) then
+                    return;
+                end;
+
                 Instance.Position = UDim2.new(
                     StartPosition.X.Scale,
                     StartPosition.X.Offset + delta.X,
@@ -1636,7 +1643,11 @@ do
                     return false
                 end
 
-                if Input.UserInputType ~= Enum.UserInputType.MouseButton1 or Input.UserInputType ~= Enum.UserInputType.Touch then
+                if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+                    return false
+                end
+
+                if Input.UserInputType ~= Enum.UserInputType.Touch then
                     return false
                 end
 
@@ -1646,6 +1657,8 @@ do
             Button.Outer.InputBegan:Connect(function(Input)
                 if not ValidateClick(Input) then return end
                 if Button.Locked then return end
+
+                print("Clicked a button!")
 
                 if Button.DoubleClick then
                     Library:RemoveFromRegistry(Button.Label)

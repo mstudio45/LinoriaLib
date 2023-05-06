@@ -340,12 +340,13 @@ function Library:MakeResizable(Instance, MinSize)
         Instance.InputChanged:Connect(function(Input)
             if Input.UserInputType == Enum.UserInputType.Touch then
                 ResizingInput = Input;
+                TouchMouseButtonDown(ResizingInput);
             end;
         end);
 
         InputService.InputChanged:Connect(function(Input)
             if Input == ResizingInput and Resizing then
-                TouchMouseButtonDown(Input);
+                MouseTouchMoved(ResizingInput);
             end;
         end);
 

@@ -53,7 +53,7 @@ pcall(function() Library.DevicePlatform = InputService:GetPlatform(); end); -- F
 Library.IsMobile = (Library.DevicePlatform == Enum.Platform.Android or Library.DevicePlatform == Enum.Platform.IOS);
 
 if Library.IsMobile then
-    Library.MinSize = Vector2.new(400, 250); -- Make UI little bit smaller.
+    Library.MinSize = Vector2.new(300, 250); -- Make UI little bit smaller.
 end
 
 local RainbowStep = 0
@@ -3770,13 +3770,23 @@ function Library:CreateWindow(...)
         Fading = false;
     end
 
+    Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
+        if type(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
+            if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Library.ToggleKeybind.Value then
+                task.spawn(Library.Toggle)
+            end
+        elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
+            task.spawn(Library.Toggle)
+        end
+    end));
+
     if Library.IsMobile then
         local ToggleUIOuter = Library:Create('Frame', {
             BorderColor3 = Color3.new(0, 0, 0);
             Position = UDim2.new(0.008, 0, 0.018, 0);
             Size = UDim2.new(0, 77, 0, 30);
             ZIndex = 200;
-            Visible = false;
+            Visible = true;
             Parent = ScreenGui;
         });
     
@@ -3839,16 +3849,6 @@ function Library:CreateWindow(...)
         ToggleUIButton.MouseButton1Down:Connect(function()
             task.spawn(Library.Toggle)
         end)
-    else
-        Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
-            if type(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
-                if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Library.ToggleKeybind.Value then
-                    task.spawn(Library.Toggle)
-                end
-            elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
-                task.spawn(Library.Toggle)
-            end
-        end))
     end;
 
     if Config.AutoShow then task.spawn(Library.Toggle) end

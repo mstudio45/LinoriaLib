@@ -282,7 +282,11 @@ function Library:MakeResizable(Instance, MinSize)
 
     local function TouchMouseButtonDown(Input)
         if not OffsetPos then
-            local Pos = Input and Input.Position or Mouse
+            local Pos = Mouse;
+            if Library.IsMobile and Input then 
+                Pos = Input.Position;
+            end;
+
             OffsetPos = Vector2.new(Pos.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Pos.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
 
             ResizerImage.BackgroundTransparency = 1
@@ -299,7 +303,10 @@ function Library:MakeResizable(Instance, MinSize)
 
     local function MouseTouchMoved(Input)
         if OffsetPos then	
-            local Pos = Input and Input.Position or Mouse
+            local Pos = Mouse;
+            if Library.IsMobile and Input then 
+                Pos = Input.Position;
+            end;
 
             local MousePos = Vector2.new(Pos.X - OffsetPos.X, Pos.Y - OffsetPos.Y);
             local FinalSize = Vector2.new(math.clamp(MousePos.X - Instance.AbsolutePosition.X, MinSize.X, math.huge), math.clamp(MousePos.Y - Instance.AbsolutePosition.Y, MinSize.Y, math.huge));
@@ -444,7 +451,10 @@ function Library:OnHighlight(HighlightInstance, Instance, Properties, Properties
 end;
 
 function Library:MouseIsOverOpenedFrame(Input)
-    local Pos = Input and Input.Position or Mouse
+    local Pos = Mouse;
+    if Library.IsMobile and Input then 
+        Pos = Input.Position;
+    end;
     for Frame, _ in next, Library.OpenedFrames do
         local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
 
@@ -457,7 +467,10 @@ function Library:MouseIsOverOpenedFrame(Input)
 end;
 
 function Library:IsMouseOverFrame(Frame, Input)
-    local Pos = Input and Input.Position or Mouse
+    local Pos = Mouse;
+    if Library.IsMobile and Input then 
+        Pos = Input.Position;
+    end;
     local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
 
     if Pos.X >= AbsPos.X and Pos.X <= AbsPos.X + AbsSize.X

@@ -280,14 +280,9 @@ function Library:MakeResizable(Instance, MinSize)
         OffsetPos = nil;
     end;
 
-    local function TouchMouseButtonDown(Input)
+    ResizerImage.MouseButton1Down:Connect(function()
         if not OffsetPos then
-            local Pos = Mouse;
-            if Library.IsMobile and Input then 
-                Pos = Input.Position;
-            end;
-
-            OffsetPos = Vector2.new(Pos.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Pos.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
+            OffsetPos = Vector2.new(Mouse.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Mouse.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
 
             ResizerImage.BackgroundTransparency = 1
             ResizerImage.Size = UDim2.fromOffset(Library.ScreenGui.AbsoluteSize.X, Library.ScreenGui.AbsoluteSize.Y);
@@ -295,75 +290,27 @@ function Library:MakeResizable(Instance, MinSize)
             ResizerImageUICorner.Parent = nil;
             ResizerImage.Parent = Library.ScreenGui;
         end;
-    end;
+    end);
 
-    local function TouchMouseButtonUp()
-        FinishResize(ResizerImage_HoverTransparency);
-    end;
-
-    local function MouseTouchMoved(Input)
-        if OffsetPos then	
-            local Pos = Mouse;
-            if Library.IsMobile and Input then 
-                Pos = Input.Position;
-            end;
-
-            local MousePos = Vector2.new(Pos.X - OffsetPos.X, Pos.Y - OffsetPos.Y);
+    ResizerImage.MouseMoved:Connect(function()
+        if OffsetPos then		
+            local MousePos = Vector2.new(Mouse.X - OffsetPos.X, Mouse.Y - OffsetPos.Y);
             local FinalSize = Vector2.new(math.clamp(MousePos.X - Instance.AbsolutePosition.X, MinSize.X, math.huge), math.clamp(MousePos.Y - Instance.AbsolutePosition.Y, MinSize.Y, math.huge));
             Instance.Size = UDim2.fromOffset(FinalSize.X, FinalSize.Y);
         end;
-    end;
+    end);
 
-    local function MouseTouchEnter()
-        FinishResize(ResizerImage_HoverTransparency);
-    end;
+    ResizerImage.MouseEnter:Connect(function()
+        FinishResize(ResizerImage_HoverTransparency);		
+    end);
 
-    local function MouseTouchLeave()
+    ResizerImage.MouseLeave:Connect(function() 
         FinishResize(1);
-    end;
+    end);
 
-    ResizerImage.MouseButton1Down:Connect(TouchMouseButtonDown);
-    ResizerImage.MouseButton1Up:Connect(TouchMouseButtonUp);
-    ResizerImage.MouseEnter:Connect(MouseTouchEnter);
-    ResizerImage.MouseLeave:Connect(MouseTouchLeave);
-    ResizerImage.MouseMoved:Connect(MouseTouchMoved);
-    
-    if Library.IsMobile then
-        local Resizing = false;
-        local ResizingInput;
-        Instance.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.Touch then
-                Resizing = true;
-
-                Input.Changed:Connect(function()
-                    if Input.UserInputState == Enum.UserInputState.End then
-                        Resizing = false;
-                        TouchMouseButtonUp();
-                    end;
-                end);
-            end;
-        end);
-
-        Instance.InputChanged:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.Touch then
-                ResizingInput = Input;
-                TouchMouseButtonDown(ResizingInput);
-            end;
-        end);
-
-        InputService.InputChanged:Connect(function(Input)
-            if Input == ResizingInput and Resizing then
-                MouseTouchMoved(ResizingInput);
-            end;
-        end);
-
-        InputService.InputEnded:Connect(function(Input)
-            if Input == ResizingInput and Resizing then
-                TouchMouseButtonUp();
-                MouseTouchLeave();
-            end;
-        end);
-    end
+    ResizerImage.MouseButton1Up:Connect(function()
+        FinishResize(ResizerImage_HoverTransparency);
+    end);
 end;
 
 function Library:AddToolTip(InfoStr, HoverInstance)

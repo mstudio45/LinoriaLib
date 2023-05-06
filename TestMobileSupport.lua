@@ -174,29 +174,58 @@ end;
 function Library:MakeDraggable(Instance, Cutoff)
     Instance.Active = true;
 
-    Instance.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-            local ObjPos = Vector2.new(
-                Mouse.X - Instance.AbsolutePosition.X,
-                Mouse.Y - Instance.AbsolutePosition.Y
-            );
+    if Library.IsMobile then
+        local Dragging, DraggingInput, DraggingStart, StartPosition;
 
-            if ObjPos.Y > (Cutoff or 40) then
-                return;
+        InputService.TouchStarted:Connect(function(Input)
+            if not Dragging then
+                Dragging = true;
+                DraggingInput = Input;
+                DraggingStart = Input.Position;
+                StartPosition = Instance.Position;
             end;
-
-            while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1 or Enum.UserInputType.Touch) do
+        end);
+        InputService.TouchMoved:Connect(function(Input)
+            if Input == DraggingInput and Dragging then
+                local delta = Input.Position - DraggingStart;
                 Instance.Position = UDim2.new(
-                    0,
-                    Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
-                    0,
-                    Mouse.Y - ObjPos.Y + (Instance.Size.Y.Offset * Instance.AnchorPoint.Y)
+                    StartPosition.X.Scale,
+                    StartPosition.X.Offset + delta.X,
+                    StartPosition.Y.Scale,
+                    StartPosition.Y.Offset + delta.Y
+                );
+            end;
+        end);
+        InputService.TouchEnded:Connect(function(Input)
+            if Input == DraggingInput then 
+                Dragging = false;
+            end;
+        end);
+    else
+        Instance.InputBegan:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                local ObjPos = Vector2.new(
+                    Mouse.X - Instance.AbsolutePosition.X,
+                    Mouse.Y - Instance.AbsolutePosition.Y
                 );
 
-                RenderStepped:Wait();
+                if ObjPos.Y > (Cutoff or 40) then
+                    return;
+                end;
+
+                while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                    Instance.Position = UDim2.new(
+                        0,
+                        Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
+                        0,
+                        Mouse.Y - ObjPos.Y + (Instance.Size.Y.Offset * Instance.AnchorPoint.Y)
+                    );
+
+                    RenderStepped:Wait();
+                end;
             end;
-        end;
-    end)
+        end)
+    end;
 end;
 
 function Library:MakeResizable(Instance, MinSize)
@@ -251,7 +280,7 @@ function Library:MakeResizable(Instance, MinSize)
         OffsetPos = nil;
     end;
 
-    ResizerImage.MouseButton1Down:Connect(function()
+    local function TouchMouseButtonDown()
         if not OffsetPos then
             OffsetPos = Vector2.new(Mouse.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Mouse.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
 
@@ -261,27 +290,43 @@ function Library:MakeResizable(Instance, MinSize)
             ResizerImageUICorner.Parent = nil;
             ResizerImage.Parent = Library.ScreenGui;
         end;
-    end);
+    end;
 
-    ResizerImage.MouseMoved:Connect(function()
+    local function TouchMouseButtonUp()
+        FinishResize(ResizerImage_HoverTransparency);
+    end;
+
+    local function MouseTouchMoved()
         if OffsetPos then		
             local MousePos = Vector2.new(Mouse.X - OffsetPos.X, Mouse.Y - OffsetPos.Y);
             local FinalSize = Vector2.new(math.clamp(MousePos.X - Instance.AbsolutePosition.X, MinSize.X, math.huge), math.clamp(MousePos.Y - Instance.AbsolutePosition.Y, MinSize.Y, math.huge));
             Instance.Size = UDim2.fromOffset(FinalSize.X, FinalSize.Y);
         end;
-    end);
+    end;
 
-    ResizerImage.MouseEnter:Connect(function()
-        FinishResize(ResizerImage_HoverTransparency);		
-    end);
-
-    ResizerImage.MouseLeave:Connect(function() 
-        FinishResize(1);
-    end);
-
-    ResizerImage.MouseButton1Up:Connect(function()
+    local function MouseTouchEnter()
         FinishResize(ResizerImage_HoverTransparency);
-    end);
+    end;
+
+    local function MouseTouchLeave()
+        FinishResize(1);
+    end;
+
+    ResizerImage.MouseButton1Down:Connect(TouchMouseButtonDown);
+    ResizerImage.MouseButton1Up:Connect(TouchMouseButtonUp);
+
+    if Library.IsMobile then
+        --ResizerImage.TouchStarted:Connect(TouchMouseButtonDown);
+        ResizerImage.TouchMoved:Connect(MouseTouchMoved);
+        ResizerImage.TouchEnded:Connect(function()
+            TouchMouseButtonUp();
+            MouseTouchLeave();
+        end);
+    else
+        ResizerImage.MouseEnter:Connect(MouseTouchEnter);
+        ResizerImage.MouseLeave:Connect(MouseTouchLeave);
+        ResizerImage.MouseMoved:Connect(MouseTouchMoved);
+    end;
 end;
 
 function Library:AddToolTip(InfoStr, HoverInstance)
@@ -2886,8 +2931,6 @@ do
     Library.WatermarkText = WatermarkLabel;
     Library:MakeDraggable(Library.Watermark);
 
-
-
     local KeybindOuter = Library:Create('Frame', {
         AnchorPoint = Vector2.new(0, 0.5);
         BorderColor3 = Color3.new(0, 0, 0);
@@ -3735,15 +3778,86 @@ function Library:CreateWindow(...)
         Fading = false;
     end
 
-    Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
-        if type(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
-            if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Library.ToggleKeybind.Value then
+    if Library.IsMobile then
+        local ToggleUIOuter = Library:Create('Frame', {
+            BorderColor3 = Color3.new(0, 0, 0);
+            Position = UDim2.new(0.008, 0, 0.018, 0);
+            Size = UDim2.new(0, 77, 0, 30);
+            ZIndex = 200;
+            Visible = false;
+            Parent = ScreenGui;
+        });
+    
+        local ToggleUIInner = Library:Create('Frame', {
+            BackgroundColor3 = Library.MainColor;
+            BorderColor3 = Library.AccentColor;
+            BorderMode = Enum.BorderMode.Inset;
+            Size = UDim2.new(1, 0, 1, 0);
+            ZIndex = 201;
+            Parent = ToggleUIOuter;
+        });
+    
+        Library:AddToRegistry(ToggleUIInner, {
+            BorderColor3 = 'AccentColor';
+        });
+    
+        local ToggleUIInnerFrame = Library:Create('Frame', {
+            BackgroundColor3 = Color3.new(1, 1, 1);
+            BorderSizePixel = 0;
+            Position = UDim2.new(0, 1, 0, 1);
+            Size = UDim2.new(1, -2, 1, -2);
+            ZIndex = 202;
+            Parent = ToggleUIInner;
+        });
+    
+        local ToggleUIGradient = Library:Create('UIGradient', {
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+                ColorSequenceKeypoint.new(1, Library.MainColor),
+            });
+            Rotation = -90;
+            Parent = ToggleUIInnerFrame;
+        });
+    
+        Library:AddToRegistry(ToggleUIGradient, {
+            Color = function()
+                return ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+                    ColorSequenceKeypoint.new(1, Library.MainColor),
+                });
+            end
+        });
+    
+        local ToggleUIButton = Library:Create('TextButton', {
+            Position = UDim2.new(0, 5, 0, 0);
+            Size = UDim2.new(1, -4, 1, 0);
+            BackgroundTransparency = 1;
+            Font = Library.Font;
+            Text = "Toggle UI";
+            TextColor3 = Library.FontColor;
+            TextSize = 14;
+            TextXAlignment = Enum.TextXAlignment.Left;
+            TextStrokeTransparency = 0;
+            ZIndex = 203;
+            Parent = ToggleUIInnerFrame;
+        });
+    
+        Library:MakeDraggable(ToggleUIOuter);
+
+        ToggleUIButton.MouseButton1Down:Connect(function()
+            task.spawn(Library.Toggle)
+        end)
+    else
+        Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
+            if type(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
+                if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Library.ToggleKeybind.Value then
+                    task.spawn(Library.Toggle)
+                end
+            elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
                 task.spawn(Library.Toggle)
             end
-        elseif Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
-            task.spawn(Library.Toggle)
-        end
-    end))
+        end))
+    end;
 
     if Config.AutoShow then task.spawn(Library.Toggle) end
 

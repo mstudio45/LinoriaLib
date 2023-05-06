@@ -317,10 +317,12 @@ function Library:MakeResizable(Instance, MinSize)
 
     if Library.IsMobile then
         --ResizerImage.TouchStarted:Connect(TouchMouseButtonDown);
-        ResizerImage.TouchMoved:Connect(MouseTouchMoved);
-        ResizerImage.TouchEnded:Connect(function()
-            TouchMouseButtonUp();
-            MouseTouchLeave();
+        ResizerImage.TouchSwipe:Connect(MouseTouchMoved);
+        ResizerImage.InputEnded:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.Touch then
+                TouchMouseButtonUp();
+                MouseTouchLeave();
+            end;
         end);
     else
         ResizerImage.MouseEnter:Connect(MouseTouchEnter);

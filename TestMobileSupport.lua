@@ -179,7 +179,7 @@ function Library:MakeDraggable(Instance, Cutoff)
     Instance.Active = true;
 
     Instance.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 and Library.CanDrag == true then
+        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
             local ObjPos = Vector2.new(
                 Mouse.X - Instance.AbsolutePosition.X,
                 Mouse.Y - Instance.AbsolutePosition.Y
@@ -189,7 +189,7 @@ function Library:MakeDraggable(Instance, Cutoff)
                 return;
             end;
 
-            while (InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and Library.CanDrag == true) do
+            while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
                 Instance.Position = UDim2.new(
                     0,
                     Mouse.X - ObjPos.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X),
@@ -290,12 +290,18 @@ function Library:MakeResizable(Instance, MinSize)
         ResizerImage.BackgroundTransparency = Transparency;
         ResizerImageUICorner.Parent = ResizerImage;
         OffsetPos = nil;
-        Library.CanDrag = true;
+
+        if Library.IsMobile then
+            Library.CanDrag = true;
+        end;
     end;
 
     ResizerImage.MouseButton1Down:Connect(function()
         if not OffsetPos then
-            Library.CanDrag = false;
+            if Library.IsMobile then
+                Library.CanDrag = false;
+            end;
+
             OffsetPos = Vector2.new(Mouse.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Mouse.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
 
             ResizerImage.BackgroundTransparency = 1
@@ -878,12 +884,18 @@ do
             });
 
             function ContextMenu:Show()
-                Library.CanDrag = false;
+                if Library.IsMobile then
+                    Library.CanDrag = false;
+                end;
+
                 self.Container.Visible = true;
             end
 
             function ContextMenu:Hide()
-                Library.CanDrag = true;
+                if Library.IsMobile then
+                    Library.CanDrag = true;
+                end;
+                
                 self.Container.Visible = false;
             end
 
@@ -2292,7 +2304,10 @@ do
 
         SliderInner.InputBegan:Connect(function(Input)
             if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
-                Library.CanDrag = false;
+                if Library.IsMobile then
+                    Library.CanDrag = false;
+                end;
+
                 local Sides = {};
                 if Library.Window then
                     Sides = Library.Window.Tabs[Library.ActiveTab]:GetSides();
@@ -2329,7 +2344,10 @@ do
                     RenderStepped:Wait();
                 end;
 
-                Library.CanDrag = true;
+                if Library.IsMobile then
+                    Library.CanDrag = true;
+                end;
+                
                 for _, Side in pairs(Sides) do
                     if typeof(Side) == "Instance" then
                         if Side:IsA("ScrollingFrame") then
@@ -2695,7 +2713,9 @@ do
         end;
 
         function Dropdown:OpenDropdown()
-            Library.CanDrag = false;
+            if Library.IsMobile then
+                Library.CanDrag = false;
+            end;
 
             ListOuter.Visible = true;
             Library.OpenedFrames[ListOuter] = true;
@@ -2705,7 +2725,9 @@ do
         end;
 
         function Dropdown:CloseDropdown()
-            Library.CanDrag = true;
+            if Library.IsMobile then            
+                Library.CanDrag = true;
+            end;
 
             ListOuter.Visible = false;
             Library.OpenedFrames[ListOuter] = nil;
@@ -3374,34 +3396,36 @@ function Library:CreateWindow(...)
             Parent = RightSide;
         });
 
-        local SidesValues = {
-            ["Left"] = tick(),
-            ["Right"] = tick(),
-        }
+        if Library.IsMobile then
+            local SidesValues = {
+                ["Left"] = tick(),
+                ["Right"] = tick(),
+            }
 
-        LeftSide:GetPropertyChangedSignal('CanvasPosition'):Connect(function()
-            Library.CanDrag = false;
+            LeftSide:GetPropertyChangedSignal('CanvasPosition'):Connect(function()
+                Library.CanDrag = false;
 
-            local ChangeTick = tick();
-            SidesValues.Left = ChangeTick;
-            task.wait(0.15);
+                local ChangeTick = tick();
+                SidesValues.Left = ChangeTick;
+                task.wait(0.15);
 
-            if SidesValues.Left == ChangeTick then
-                Library.CanDrag = true;
-            end
-        end);
+                if SidesValues.Left == ChangeTick then
+                    Library.CanDrag = true;
+                end
+            end);
 
-        RightSide:GetPropertyChangedSignal('CanvasPosition'):Connect(function()
-            Library.CanDrag = false;
+            RightSide:GetPropertyChangedSignal('CanvasPosition'):Connect(function()
+                Library.CanDrag = false;
 
-            local ChangeTick = tick();
-            SidesValues.Right = ChangeTick;
-            task.wait(0.15);
-            
-            if SidesValues.Right == ChangeTick then
-                Library.CanDrag = true;
-            end
-        end);
+                local ChangeTick = tick();
+                SidesValues.Right = ChangeTick;
+                task.wait(0.15);
+                
+                if SidesValues.Right == ChangeTick then
+                    Library.CanDrag = true;
+                end
+            end);
+        end;
 
         for _, Side in next, { LeftSide, RightSide } do
             Side:WaitForChild('UIListLayout'):GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()

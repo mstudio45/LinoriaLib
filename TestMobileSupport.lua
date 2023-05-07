@@ -290,10 +290,12 @@ function Library:MakeResizable(Instance, MinSize)
         ResizerImage.BackgroundTransparency = Transparency;
         ResizerImageUICorner.Parent = ResizerImage;
         OffsetPos = nil;
+        Library.CanDrag = true;
     end;
 
     ResizerImage.MouseButton1Down:Connect(function()
         if not OffsetPos then
+            Library.CanDrag = false;
             OffsetPos = Vector2.new(Mouse.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Mouse.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
 
             ResizerImage.BackgroundTransparency = 1
@@ -876,11 +878,13 @@ do
             });
 
             function ContextMenu:Show()
-                self.Container.Visible = true
+                Library.CanDrag = false;
+                self.Container.Visible = true;
             end
 
             function ContextMenu:Hide()
-                self.Container.Visible = false
+                Library.CanDrag = true;
+                self.Container.Visible = false;
             end
 
             function ContextMenu:AddOption(Str, Callback)
@@ -2691,6 +2695,8 @@ do
         end;
 
         function Dropdown:OpenDropdown()
+            Library.CanDrag = false;
+
             ListOuter.Visible = true;
             Library.OpenedFrames[ListOuter] = true;
             DropdownArrow.Rotation = 180;
@@ -2699,6 +2705,8 @@ do
         end;
 
         function Dropdown:CloseDropdown()
+            Library.CanDrag = true;
+
             ListOuter.Visible = false;
             Library.OpenedFrames[ListOuter] = nil;
             DropdownArrow.Rotation = 0;
@@ -3365,6 +3373,35 @@ function Library:CreateWindow(...)
             HorizontalAlignment = Enum.HorizontalAlignment.Center;
             Parent = RightSide;
         });
+
+        local SidesValues = {
+            ["Left"] = tick(),
+            ["Right"] = tick(),
+        }
+
+        LeftSide:GetPropertyChangedSignal('CanvasPosition'):Connect(function()
+            Library.CanDrag = false;
+
+            local ChangeTick = tick();
+            SidesValues.Left = ChangeTick;
+            task.wait(0.15);
+
+            if SidesValues.Left == ChangeTick then
+                Library.CanDrag = true;
+            end
+        end);
+
+        RightSide:GetPropertyChangedSignal('CanvasPosition'):Connect(function()
+            Library.CanDrag = false;
+
+            local ChangeTick = tick();
+            SidesValues.Right = ChangeTick;
+            task.wait(0.15);
+            
+            if SidesValues.Right == ChangeTick then
+                Library.CanDrag = true;
+            end
+        end);
 
         for _, Side in next, { LeftSide, RightSide } do
             Side:WaitForChild('UIListLayout'):GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()

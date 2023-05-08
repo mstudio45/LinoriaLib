@@ -1657,15 +1657,12 @@ do
 
             local function ValidateClick(Input)
                 if Library:MouseIsOverOpenedFrame(Input) then
-                    print("Mouse over opened frame")
                     return false
                 end
 
                 if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    print("MouseButton1 Click")
                     return true
                 elseif Input.UserInputType == Enum.UserInputType.Touch then
-                    print("Touch Click")
                     return true
                 else
                     return false

@@ -241,6 +241,10 @@ function Library:MakeDraggable(Instance, Cutoff)
 end;
 
 function Library:MakeResizable(Instance, MinSize)
+    if Library.IsMobile then
+        return;
+    end;
+
     Instance.Active = true;
     
     local ResizerImage_Size = 25;
@@ -290,18 +294,10 @@ function Library:MakeResizable(Instance, MinSize)
         ResizerImage.BackgroundTransparency = Transparency;
         ResizerImageUICorner.Parent = ResizerImage;
         OffsetPos = nil;
-
-        if Library.IsMobile then
-            Library.CanDrag = true;
-        end;
     end;
 
     ResizerImage.MouseButton1Down:Connect(function()
         if not OffsetPos then
-            if Library.IsMobile then
-                Library.CanDrag = false;
-            end;
-
             OffsetPos = Vector2.new(Mouse.X - (Instance.AbsolutePosition.X + Instance.AbsoluteSize.X), Mouse.Y - (Instance.AbsolutePosition.Y + Instance.AbsoluteSize.Y));
 
             ResizerImage.BackgroundTransparency = 1

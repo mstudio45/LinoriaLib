@@ -66,24 +66,7 @@ local ThemeManager = {} do
 		
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
-			if field == "VideoLink" and Options["VideoLink"] then
-				if writefile and self.Library.InnerVideoBackground ~= nil then
-					if string.sub(tostring(Options["VideoLink"]), -5) == ".webm" then
-						local VideoData = httprequest({
-							Url = videolinktextbox:Get(),
-							Method = 'GET'
-						})
-						if (VideoData.Success) then
-							VideoData = VideoData.Body
-							writefile(self.Folder .. '/themes/currentVideo.webm', VideoData)
-							local Video = getassetfunc(self.Folder .. '/themes/currentVideo.webm')
-							self.Library.InnerVideoBackground.Video = Video
-							self.Library.InnerVideoBackground.Visible = true
-							self.Library.InnerVideoBackground:Play()
-						end
-					end
-				end	
-			elseif Options and Options[field] then
+			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
 			end
 		end

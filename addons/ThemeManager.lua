@@ -70,15 +70,15 @@ local ThemeManager = {} do
 			self.Library.InnerVideoBackground.Visible = false
 		end
 		
-		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
+		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", }
 		for i, field in next, options do
 			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
-				
-				if field == "VideoLink" then
-					ApplyBackgroundVideo(Options[field].Value)
-				end
 			end
+		end
+		
+		if Options and Options["VideoLink"] then
+			ApplyBackgroundVideo(Options["VideoLink"].Value)
 		end
 
 		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);
@@ -173,14 +173,14 @@ local ThemeManager = {} do
 			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
 		end)
 		groupbox:AddButton('Delete theme', function()
-			local name = Options.ThemeManager_CustomThemeList.Value
+			local name = Options.ThemeManager_CustomThemeName.Value
 
 			local success, err = self:Delete(name)
 			if not success then
 				return self.Library:Notify('Failed to delete theme: ' .. err)
 			end
 
-			self.Library:Notify(string.format('Deleted config %q', name))
+			self.Library:Notify(string.format('Deleted theme %q', name))
 			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
 			Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end)
@@ -230,10 +230,14 @@ local ThemeManager = {} do
 		end
 
 		local theme = {}
-		local fields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
+		local fields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 
 		for _, field in next, fields do
-			theme[field] = Options[field].Value:ToHex()
+			if field == "VideoLink" then
+				theme[field] = Options[field].Value
+			else
+				theme[field] = Options[field].Value:ToHex()
+			end
 		end
 
 		writefile(self.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))

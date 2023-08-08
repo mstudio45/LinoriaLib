@@ -45,7 +45,8 @@ local Library = {
     Signals = {};
     ScreenGui = ScreenGui;
     MinSize = Vector2.new(550, 300);
-	VideoLink = "";
+    VideoLink = "";
+    TotalTabs = 0;
 };
 
 local RainbowStep = 0
@@ -3625,7 +3626,8 @@ function Library:CreateWindow(...)
         end);
 
         -- This was the first tab added, so we show it by default.
-        if #TabContainer:GetChildren() == 2 then -- 2 because VideoFrame
+	Library.TotalTabs = Library.TotalTabs + 1;
+        if Library.TotalTabs == 1 then
             Tab:ShowTab();
         end;
 

@@ -73,6 +73,11 @@ local ThemeManager = {} do
 				end
 			else
 				self.Library[idx] = col
+				
+				if Options[idx] then
+					Options[idx]:SetValue(col)
+				end
+				
 				ApplyBackgroundVideo(col)
 			end
 		end

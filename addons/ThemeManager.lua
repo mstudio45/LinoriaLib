@@ -18,22 +18,22 @@ local ThemeManager = {} do
 
 	function ApplyBackgroundVideo(webmLink)
 		if writefile == nil then return end
-		if self.Library == nil then return end
-		if self.Library.InnerVideoBackground == nil then return end
+		if ThemeManager.Library == nil then return end
+		if ThemeManager.Library.InnerVideoBackground == nil then return end
 
 		if string.sub(tostring(webmLink), -5) == ".webm" then
 			local VideoData = httprequest({
-				Url = videolinktextbox:Get(),
+				Url = tostring(webmLink),
 				Method = 'GET'
 			})
 			
 			if (VideoData.Success) then
 				VideoData = VideoData.Body
-				writefile(self.Folder .. '/themes/currentVideo.webm', VideoData)
-				local Video = getassetfunc(self.Folder .. '/themes/currentVideo.webm')
-				self.Library.InnerVideoBackground.Video = Video
-				self.Library.InnerVideoBackground.Visible = true
-				self.Library.InnerVideoBackground:Play()
+				writefile(ThemeManager.Folder .. '/themes/currentVideo.webm', VideoData)
+				local Video = getassetfunc(ThemeManager.Folder .. '/themes/currentVideo.webm')
+				ThemeManager.Library.InnerVideoBackground.Video = Video
+				ThemeManager.Library.InnerVideoBackground.Visible = true
+				ThemeManager.Library.InnerVideoBackground:Play()
 			end
 		end
 	end

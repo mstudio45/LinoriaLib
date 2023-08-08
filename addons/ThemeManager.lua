@@ -16,6 +16,27 @@ local ThemeManager = {} do
 		['Quartz'] 			= { 8, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"232330","AccentColor":"426e87","BackgroundColor":"1d1b26","OutlineColor":"27232f"}') },
 	}
 
+	function ApplyBackgroundVideo(webmLink)
+		if writefile == nil then return end
+		if self.Library.InnerVideoBackground == nil then return end
+
+		if string.sub(tostring(webmLink), -5) == ".webm" then
+			local VideoData = httprequest({
+				Url = videolinktextbox:Get(),
+				Method = 'GET'
+			})
+			
+			if (VideoData.Success) then
+				VideoData = VideoData.Body
+				writefile(self.Folder .. '/themes/currentVideo.webm', VideoData)
+				local Video = getassetfunc(self.Folder .. '/themes/currentVideo.webm')
+				self.Library.InnerVideoBackground.Video = Video
+				self.Library.InnerVideoBackground.Visible = true
+				self.Library.InnerVideoBackground:Play()
+			end
+		end
+	end
+	
 	function ThemeManager:ApplyTheme(theme)
 		local customThemeData = self:GetCustomTheme(theme)
 		local data = customThemeData or self.BuiltInThemes[theme]
@@ -30,22 +51,7 @@ local ThemeManager = {} do
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
 			if idx == "VideoLink" then
-				if writefile and self.Library.InnerVideoBackground ~= nil then
-					if string.sub(tostring(col), -5) == ".webm" then
-						local VideoData = httprequest({
-							Url = videolinktextbox:Get(),
-							Method = 'GET'
-						})
-						if (VideoData.Success) then
-							VideoData = VideoData.Body
-							writefile(self.Folder .. '/themes/currentVideo.webm', VideoData)
-							local Video = getassetfunc(self.Folder .. '/themes/currentVideo.webm')
-							self.Library.InnerVideoBackground.Video = Video
-							self.Library.InnerVideoBackground.Visible = true
-							self.Library.InnerVideoBackground:Play()
-						end
-					end
-				end
+				ApplyBackgroundVideo(col)
 			else
 				self.Library[idx] = Color3.fromHex(col)
 				
@@ -68,6 +74,9 @@ local ThemeManager = {} do
 		for i, field in next, options do
 			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
+				if field == "VideoLink" then
+					ApplyBackgroundVideo(Options[field].Value)
+				end
 			end
 		end
 

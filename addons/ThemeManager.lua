@@ -65,14 +65,15 @@ local ThemeManager = {} do
 		
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
-			self.Library[idx] = Color3.fromHex(col)
-			
-			if Options[idx] then
-				Options[idx]:SetValueRGB(Color3.fromHex(col))
-			end
-			
-			if idx == "VideoLink" then
-				ApplyBackgroundVideo(Options["VideoLink"].Value)
+			if idx ~= "VideoLink" then
+				self.Library[idx] = Color3.fromHex(col)
+				
+				if Options[idx] then
+					Options[idx]:SetValueRGB(Color3.fromHex(col))
+				end
+			else
+				self.Library[idx] = col
+				ApplyBackgroundVideo(col)
 			end
 		end
 

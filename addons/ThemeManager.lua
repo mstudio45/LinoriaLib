@@ -112,6 +112,20 @@ local ThemeManager = {} do
 		writefile(self.Folder .. '/themes/default.txt', theme)
 	end
 
+	function ThemeManager:Delete(name)
+		if (not name) then
+			return false, 'no config file is selected'
+		end
+		
+		local file = self.Folder .. '/themes/' .. name .. '.json'
+		if not isfile(file) then return false, 'invalid file' end
+
+		local success, decoded = pcall(delfile, file)
+		if not success then return false, 'delete file error' end
+		
+		return true
+	end
+	
 	function ThemeManager:CreateThemeManager(groupbox)
 		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor });
 		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor });
@@ -155,8 +169,20 @@ local ThemeManager = {} do
 		groupbox:AddButton('Load theme', function() 
 			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
 		end)
-		groupbox:AddButton('Save theme', function()
+		groupbox:AddButton('Overwrite theme', function()
 			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
+		end)
+		groupbox:AddButton('Delete theme', function()
+			local name = Options.ThemeManager_CustomThemeList.Value
+
+			local success, err = self:Delete(name)
+			if not success then
+				return self.Library:Notify('Failed to delete theme: ' .. err)
+			end
+
+			self.Library:Notify(string.format('Deleted config %q', name))
+			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
+			Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end)
 		groupbox:AddButton('Refresh list', function()
 			Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())

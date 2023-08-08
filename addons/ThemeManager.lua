@@ -18,6 +18,7 @@ local ThemeManager = {} do
 
 	function ApplyBackgroundVideo(webmLink)
 		if writefile == nil then return end
+		if self.Library == nil then return end
 		if self.Library.InnerVideoBackground == nil then return end
 
 		if string.sub(tostring(webmLink), -5) == ".webm" then
@@ -50,9 +51,7 @@ local ThemeManager = {} do
 		
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
-			if idx == "VideoLink" then
-				ApplyBackgroundVideo(col)
-			else
+			if idx ~= "VideoLink" then
 				self.Library[idx] = Color3.fromHex(col)
 				
 				if Options[idx] then
@@ -74,6 +73,7 @@ local ThemeManager = {} do
 		for i, field in next, options do
 			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
+				
 				if field == "VideoLink" then
 					ApplyBackgroundVideo(Options[field].Value)
 				end

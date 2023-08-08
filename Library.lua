@@ -45,6 +45,7 @@ local Library = {
     Signals = {};
     ScreenGui = ScreenGui;
     MinSize = Vector2.new(550, 300);
+	VideoLink = "";
 };
 
 local RainbowStep = 0
@@ -3105,7 +3106,19 @@ function Library:CreateWindow(...)
         ZIndex = 1;
         Parent = Outer;
     });
-
+	local InnerVideoBackground = Library:Create('VideoFrame', {
+        BackgroundColor3 = Library.MainColor;
+        BorderColor3 = Library.AccentColor;
+        BorderMode = Enum.BorderMode.Inset;
+        Position = UDim2.new(0, 1, 0, 1);
+        Size = UDim2.new(1, -2, 1, -2);
+        ZIndex = 1;
+		Visible = false;
+		Looped = true;
+        Parent = Outer;
+    });
+	Library.InnerVideoBackground = InnerVideoBackground;
+	
     Library:AddToRegistry(Inner, {
         BackgroundColor3 = 'MainColor';
         BorderColor3 = 'AccentColor';

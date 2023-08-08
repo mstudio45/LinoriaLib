@@ -37,7 +37,7 @@ local ThemeManager = {} do
 
 	function ThemeManager:ThemeUpdate()
 		-- This allows us to force apply themes without loading the themes tab :)
-		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
+		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
 			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
@@ -81,7 +81,8 @@ local ThemeManager = {} do
 		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor });
 		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
 		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
-
+		groupbox:AddLabel('.webm Video Link'):AddInput('VideoLink', { Default = self.Library.VideoLink });
+		
 		local ThemesArray = {}
 		for Name, Theme in next, self.BuiltInThemes do
 			table.insert(ThemesArray, Name)

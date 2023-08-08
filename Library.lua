@@ -3106,18 +3106,6 @@ function Library:CreateWindow(...)
         ZIndex = 1;
         Parent = Outer;
     });
-	local InnerVideoBackground = Library:Create('VideoFrame', {
-        BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.AccentColor;
-        BorderMode = Enum.BorderMode.Inset;
-        Position = UDim2.new(0, 1, 0, 1);
-        Size = UDim2.new(1, -2, 1, -2);
-        ZIndex = 1;
-		Visible = false;
-		Looped = true;
-        Parent = Outer;
-    });
-	Library.InnerVideoBackground = InnerVideoBackground;
 	
     Library:AddToRegistry(Inner, {
         BackgroundColor3 = 'MainColor';
@@ -3184,7 +3172,19 @@ function Library:CreateWindow(...)
         ZIndex = 2;
         Parent = MainSectionInner;
     });
-    
+
+	local InnerVideoBackground = Library:Create('VideoFrame', {
+        BackgroundColor3 = Library.MainColor;
+        BorderColor3 = Library.AccentColor;
+        BorderMode = Enum.BorderMode.Inset;
+        Position = UDim2.new(0, 1, 0, 1);
+        Size = UDim2.new(1, -2, 1, -2);
+        ZIndex = 2;
+		Visible = false;
+		Looped = true;
+        Parent = MainSectionInner;
+    });
+	Library.InnerVideoBackground = InnerVideoBackground;
 
     Library:AddToRegistry(TabContainer, {
         BackgroundColor3 = 'MainColor';

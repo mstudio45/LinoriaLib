@@ -18,19 +18,32 @@ local ThemeManager = {} do
 	}
 
 	function ApplyBackgroundVideo(webmLink)
-		if writefile == nil then return end
+		if writefile == nil then return end;if readfile == nil then return end;if isfile == nil then return end
 		if ThemeManager.Library == nil then return end
 		if ThemeManager.Library.InnerVideoBackground == nil then return end
 
 		if string.sub(tostring(webmLink), -5) == ".webm" then
-			local VideoData = httprequest({
-				Url = tostring(webmLink),
-				Method = 'GET'
-			})
+			local CurrentSaved = readfile(ThemeManager.Folder .. '/themes/currentVideoLink.txt')
+			local VideoData = nil;
+			if CurrentSaved == tostring(webmLink) then
+				VideoData = {
+					Success = true,
+					Body = nil
+				}
+			else
+				VideoData = httprequest({
+					Url = tostring(webmLink),
+					Method = 'GET'
+				})
+			end
 			
 			if (VideoData.Success) then
 				VideoData = VideoData.Body
-				writefile(ThemeManager.Folder .. '/themes/currentVideo.webm', VideoData)
+				if (isfile(ThemeManager.Folder .. '/themes/currentVideo.webm') == false and VideoData ~= nil) or VideoData ~= nil then
+					writefile(ThemeManager.Folder .. '/themes/currentVideo.webm', VideoData)
+					writefile(ThemeManager.Folder .. '/themes/currentVideoLink.txt', tostring(webmLink))
+				end
+				
 				local Video = getassetfunc(ThemeManager.Folder .. '/themes/currentVideo.webm')
 				ThemeManager.Library.InnerVideoBackground.Video = Video
 				ThemeManager.Library.InnerVideoBackground.Visible = true
@@ -52,12 +65,14 @@ local ThemeManager = {} do
 		
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
-			if idx ~= "VideoLink" then
-				self.Library[idx] = Color3.fromHex(col)
-				
-				if Options[idx] then
-					Options[idx]:SetValueRGB(Color3.fromHex(col))
-				end
+			self.Library[idx] = Color3.fromHex(col)
+			
+			if Options[idx] then
+				Options[idx]:SetValueRGB(Color3.fromHex(col))
+			end
+			
+			if idx == "VideoLink" then
+				ApplyBackgroundVideo(Options["VideoLink"].Value)
 			end
 		end
 
@@ -70,15 +85,14 @@ local ThemeManager = {} do
 			self.Library.InnerVideoBackground.Visible = false
 		end
 		
-		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", }
+		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
 			if Options and Options[field] then
 				self.Library[field] = Options[field].Value
+				if field == "VideoLink" then
+					ApplyBackgroundVideo(Options[field].Value)
+				end
 			end
-		end
-		
-		if Options and Options["VideoLink"] then
-			ApplyBackgroundVideo(Options["VideoLink"].Value)
 		end
 
 		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);

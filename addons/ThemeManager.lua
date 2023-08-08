@@ -23,7 +23,10 @@ local ThemeManager = {} do
 		if ThemeManager.Library.InnerVideoBackground == nil then return end
 
 		if string.sub(tostring(webmLink), -5) == ".webm" then
-			local CurrentSaved = readfile(ThemeManager.Folder .. '/themes/currentVideoLink.txt')
+			local CurrentSaved = ""
+			if isfile(ThemeManager.Folder .. '/themes/currentVideoLink.txt') then
+				 CurrentSaved = readfile(ThemeManager.Folder .. '/themes/currentVideoLink.txt')
+			end
 			local VideoData = nil;
 			if CurrentSaved == tostring(webmLink) then
 				VideoData = {

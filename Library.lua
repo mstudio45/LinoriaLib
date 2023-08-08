@@ -3183,6 +3183,7 @@ function Library:CreateWindow(...)
             Size = UDim2.new(1, -2, 1, -2);
             ZIndex = 2;
             Visible = false;
+            Volume = 0;
             Looped = true;
             Parent = TabContainer;
         });

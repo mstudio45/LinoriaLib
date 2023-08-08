@@ -1,4 +1,5 @@
 local httpService = game:GetService('HttpService')
+local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 local ThemeManager = {} do
 	ThemeManager.Folder = 'LinoriaLibSettings'
 	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
@@ -22,13 +23,35 @@ local ThemeManager = {} do
 		if not data then return end
 
 		-- custom themes are just regular dictionaries instead of an array with { index, dictionary }
-
+		if self.Library.InnerVideoBackground ~= nil then
+			self.Library.InnerVideoBackground.Visible = false
+		end
+		
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
-			self.Library[idx] = Color3.fromHex(col)
-			
-			if Options[idx] then
-				Options[idx]:SetValueRGB(Color3.fromHex(col))
+			if idx == "VideoLink" then
+				if writefile and self.Library.InnerVideoBackground ~= nil then
+					if string.sub(tostring(col), -5) == ".webm" then
+						local VideoData = httprequest({
+							Url = videolinktextbox:Get(),
+							Method = 'GET'
+						})
+						if (VideoData.Success) then
+							VideoData = VideoData.Body
+							writefile(self.Folder .. '/themes/currentVideo.webm', VideoData)
+							local Video = getassetfunc(self.Folder .. '/themes/currentVideo.webm')
+							self.Library.InnerVideoBackground.Video = Video
+							self.Library.InnerVideoBackground.Visible = true
+							self.Library.InnerVideoBackground:Play()
+						end
+					end
+				end
+			else
+				self.Library[idx] = Color3.fromHex(col)
+				
+				if Options[idx] then
+					Options[idx]:SetValueRGB(Color3.fromHex(col))
+				end
 			end
 		end
 
@@ -37,9 +60,30 @@ local ThemeManager = {} do
 
 	function ThemeManager:ThemeUpdate()
 		-- This allows us to force apply themes without loading the themes tab :)
+		if self.Library.InnerVideoBackground ~= nil then
+			self.Library.InnerVideoBackground.Visible = false
+		end
+		
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
-			if Options and Options[field] then
+			if field == "VideoLink" and Options["VideoLink"] then
+				if writefile and self.Library.InnerVideoBackground ~= nil then
+					if string.sub(tostring(Options["VideoLink"]), -5) == ".webm" then
+						local VideoData = httprequest({
+							Url = videolinktextbox:Get(),
+							Method = 'GET'
+						})
+						if (VideoData.Success) then
+							VideoData = VideoData.Body
+							writefile(self.Folder .. '/themes/currentVideo.webm', VideoData)
+							local Video = getassetfunc(self.Folder .. '/themes/currentVideo.webm')
+							self.Library.InnerVideoBackground.Video = Video
+							self.Library.InnerVideoBackground.Visible = true
+							self.Library.InnerVideoBackground:Play()
+						end
+					end
+				end	
+			elseif Options and Options[field] then
 				self.Library[field] = Options[field].Value
 			end
 		end

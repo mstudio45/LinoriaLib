@@ -578,6 +578,7 @@ function Library:Unload()
 		Library.OnUnload()
 	end
 
+	getgenv().Linoria = nil
 	ScreenGui:Destroy()
 end
 

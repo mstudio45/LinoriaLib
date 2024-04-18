@@ -265,10 +265,10 @@ LeftGroupBox:AddDropdown('MyMultiDropdown', {
 
 	Values = { 'This', 'is', 'a', 'dropdown' },
 	Default = 1,
-	Multi = true, -- true / false, allows multiple choices to be selected
+	Multi = true,
 
 	Text = 'A dropdown',
-	Tooltip = 'This is a tooltip', -- Information shown when you hover over the dropdown
+	Tooltip = 'This is a tooltip',
 
 	Callback = function(Value)
 		print('[cb] Multi dropdown got changed:', Value)
@@ -291,10 +291,19 @@ Options.MyMultiDropdown:SetValue({
 LeftGroupBox:AddDropdown('MyPlayerDropdown', {
 	SpecialType = 'Player',
 	Text = 'A player dropdown',
-	Tooltip = 'This is a tooltip', -- Information shown when you hover over the dropdown
+	Tooltip = 'This is a tooltip',
 
 	Callback = function(Value)
 		print('[cb] Player dropdown got changed:', Value)
+	end
+})
+LeftGroupBox:AddDropdown('MyTeamDropdown', {
+	SpecialType = 'Team',
+	Text = 'A team dropdown',
+	Tooltip = 'This is a tooltip',
+
+	Callback = function(Value)
+		print('[cb] Team dropdown got changed:', Value)
 	end
 })
 
@@ -379,7 +388,7 @@ Options.KeyPicker:SetValue({ 'MB2', 'Toggle' }) -- Sets keybind to MB2, mode to 
 
 -- Long text label to demonstrate UI scrolling behaviour.
 local LeftGroupBox2 = Tabs.Main:AddLeftGroupbox('Groupbox #2');
-LeftGroupBox2:AddLabel('Oh no...\nThis label spans multiple lines!\n\nWe\'re gonna run out of UI space...\nJust kidding! Scroll down!\n\n\nHello from below!', true)
+LeftGroupBox2:AddLabel('I made a base somewhere super hidden, you\'ll never find it!\n\n\n/------\\\n|      |\n|Darn. |\n--------', true)
 
 local TabBox = Tabs.Main:AddRightTabbox() -- Add Tabbox on right side
 

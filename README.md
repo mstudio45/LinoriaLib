@@ -24,3 +24,4 @@ Used in the Linoria script hub: https://kyaru.cloud
 - mstudio45: Extending library functionality and adding resizing to the menu.
 - Stefanuk: Extending library functionality.
 - matas3535: Creator of Splix.
+- RectangularObject: Fixing UI bugs, extending library functionality.

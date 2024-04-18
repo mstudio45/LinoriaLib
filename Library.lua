@@ -4156,9 +4156,22 @@ local function OnPlayerChange()
 		end;
 	end;
 end;
+local function OnTeamChange(child)
+	if not child:IsA('Team') then return end
+	local TeamList = GetTeamsString();
+
+	for _, Value in next, Options do
+		if Value.Type == 'Dropdown' and Value.SpecialType == 'Team' then
+			Value:SetValues(TeamList);
+			Value:Display();
+		end;
+	end;
+end
 
 Players.PlayerAdded:Connect(OnPlayerChange);
 Players.PlayerRemoving:Connect(OnPlayerChange);
+Teams.ChildAdded:Connect(OnTeamChange);
+Teams.ChildRemoved:Connect(OnTeamChange);
 
 getgenv().Library = Library
 return Library

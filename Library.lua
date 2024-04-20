@@ -11,12 +11,14 @@ local LocalPlayer = Players.LocalPlayer;
 local Mouse = LocalPlayer:GetMouse();
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
+local GetHUI = gethui or (function() return CoreGui end);
+local IsKrampus = ((identifyexecutor or (function() return "" end))():lower() == "krampus");
 
 local ScreenGui = Instance.new('ScreenGui');
 ProtectGui(ScreenGui);
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
-ScreenGui.Parent = CoreGui;
+ScreenGui.Parent = GetHUI();
 
 local Toggles = {};
 local Options = {};
@@ -1406,7 +1408,7 @@ do
 			local Key, Mode = Data[1], Data[2];
 			DisplayLabel.Text = Key;
 			KeyPicker.Value = Key;
-			ModeButtons[Mode]:Select();
+			if ModeButtons[Mode] then ModeButtons[Mode]:Select(); end
 			KeyPicker:Update();
 		end;
 
@@ -2114,6 +2116,7 @@ do
 		end
 
 		function Toggle:Display()
+			if IsKrampus then setthreadcaps(8) end
 			ToggleInner.BackgroundColor3 = Toggle.Value and Library.AccentColor or Library.MainColor;
 			ToggleInner.BorderColor3 = Toggle.Value and Library.AccentColorDark or Library.OutlineColor;
 

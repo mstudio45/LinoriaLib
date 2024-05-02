@@ -3094,6 +3094,7 @@ do
 		ZIndex = 104;
 		Parent = KeybindInner;
 	});
+	Library:MakeDraggable(KeybindOuter);
 
 	local KeybindContainer = Library:Create('Frame', {
 		BackgroundTransparency = 1;

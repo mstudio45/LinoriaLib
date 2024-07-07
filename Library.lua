@@ -12,7 +12,6 @@ local Mouse = LocalPlayer:GetMouse();
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 local GetHUI = gethui or (function() return CoreGui end);
-local IsKrampus = ((identifyexecutor or (function() return "" end))():lower() == "krampus");
 
 local ScreenGui = Instance.new('ScreenGui');
 ProtectGui(ScreenGui);
@@ -2116,7 +2115,6 @@ do
 		end
 
 		function Toggle:Display()
-			if IsKrampus then setthreadcaps(8) end
 			ToggleInner.BackgroundColor3 = Toggle.Value and Library.AccentColor or Library.MainColor;
 			ToggleInner.BorderColor3 = Toggle.Value and Library.AccentColorDark or Library.OutlineColor;
 

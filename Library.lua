@@ -64,6 +64,8 @@ local Library = {
 	ShowCustomCursor = true; 
 	VideoLink = "";
 	TotalTabs = 0;
+
+	NotifyOnError = false
 };
 
 pcall(function() Library.DevicePlatform = InputService:GetPlatform(); end); -- For safety so the UI library doesn't error.
@@ -115,6 +117,110 @@ local function GetTeamsString()
 	table.sort(TeamList, function(str1, str2) return str1 < str2 end);
 	
 	return TeamList;
+end;
+
+function Library:Notify(Text, Time, SoundId)
+	local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
+
+	YSize = YSize + 7
+
+	local NotifyOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0);
+		Position = UDim2.new(0, 100, 0, 10);
+		Size = UDim2.new(0, 0, 0, YSize);
+		ClipsDescendants = true;
+		ZIndex = 100;
+		Parent = Library.NotificationArea;
+	});
+
+	local NotifyInner = Library:Create('Frame', {
+		BackgroundColor3 = Library.MainColor;
+		BorderColor3 = Library.OutlineColor;
+		BorderMode = Enum.BorderMode.Inset;
+		Size = UDim2.new(1, 0, 1, 0);
+		ZIndex = 101;
+		Parent = NotifyOuter;
+	});
+
+	Library:AddToRegistry(NotifyInner, {
+		BackgroundColor3 = 'MainColor';
+		BorderColor3 = 'OutlineColor';
+	}, true);
+
+	local InnerFrame = Library:Create('Frame', {
+		BackgroundColor3 = Color3.new(1, 1, 1);
+		BorderSizePixel = 0;
+		Position = UDim2.new(0, 1, 0, 1);
+		Size = UDim2.new(1, -2, 1, -2);
+		ZIndex = 102;
+		Parent = NotifyInner;
+	});
+
+	local Gradient = Library:Create('UIGradient', {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+			ColorSequenceKeypoint.new(1, Library.MainColor),
+		});
+		Rotation = -90;
+		Parent = InnerFrame;
+	});
+
+	Library:AddToRegistry(Gradient, {
+		Color = function()
+			return ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+				ColorSequenceKeypoint.new(1, Library.MainColor),
+			});
+		end
+	});
+
+	local NotifyLabel = Library:CreateLabel({
+		Position = UDim2.new(0, 4, 0, 0);
+		Size = UDim2.new(1, -4, 1, 0);
+		Text = Text;
+		TextXAlignment = Enum.TextXAlignment.Left;
+		TextSize = 14;
+		ZIndex = 103;
+		Parent = InnerFrame;
+	});
+
+	local LeftColor = Library:Create('Frame', {
+		BackgroundColor3 = Library.AccentColor;
+		BorderSizePixel = 0;
+		Position = UDim2.new(0, -1, 0, -1);
+		Size = UDim2.new(0, 3, 1, 2);
+		ZIndex = 104;
+		Parent = NotifyOuter;
+	});
+
+	Library:AddToRegistry(LeftColor, {
+		BackgroundColor3 = 'AccentColor';
+	}, true);
+
+	if SoundId then
+		Library:Create('Sound', {
+			SoundId = "rbxassetid://" .. tostring(SoundId):gsub("rbxassetid://", "");
+			Volume = 3;
+			PlayOnRemove = true;
+			Parent = game:GetService("SoundService");
+		}):Destroy();
+	end
+
+	pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
+
+	task.spawn(function()
+		if typeof(Time) == "Instance" then
+			Time.Destroying:Wait();
+		else
+			task.wait(Time or 5);
+		end
+
+		pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
+
+		task.wait(0.4);
+
+		NotifyOuter:Destroy();
+	end);
 end;
 
 function Library:SafeCallback(f, ...)
@@ -3128,110 +3234,6 @@ function Library:SetWatermark(Text)
 	Library:SetWatermarkVisibility(true)
 
 	Library.WatermarkText.Text = Text;
-end;
-
-function Library:Notify(Text, Time, SoundId)
-	local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
-
-	YSize = YSize + 7
-
-	local NotifyOuter = Library:Create('Frame', {
-		BorderColor3 = Color3.new(0, 0, 0);
-		Position = UDim2.new(0, 100, 0, 10);
-		Size = UDim2.new(0, 0, 0, YSize);
-		ClipsDescendants = true;
-		ZIndex = 100;
-		Parent = Library.NotificationArea;
-	});
-
-	local NotifyInner = Library:Create('Frame', {
-		BackgroundColor3 = Library.MainColor;
-		BorderColor3 = Library.OutlineColor;
-		BorderMode = Enum.BorderMode.Inset;
-		Size = UDim2.new(1, 0, 1, 0);
-		ZIndex = 101;
-		Parent = NotifyOuter;
-	});
-
-	Library:AddToRegistry(NotifyInner, {
-		BackgroundColor3 = 'MainColor';
-		BorderColor3 = 'OutlineColor';
-	}, true);
-
-	local InnerFrame = Library:Create('Frame', {
-		BackgroundColor3 = Color3.new(1, 1, 1);
-		BorderSizePixel = 0;
-		Position = UDim2.new(0, 1, 0, 1);
-		Size = UDim2.new(1, -2, 1, -2);
-		ZIndex = 102;
-		Parent = NotifyInner;
-	});
-
-	local Gradient = Library:Create('UIGradient', {
-		Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-			ColorSequenceKeypoint.new(1, Library.MainColor),
-		});
-		Rotation = -90;
-		Parent = InnerFrame;
-	});
-
-	Library:AddToRegistry(Gradient, {
-		Color = function()
-			return ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-				ColorSequenceKeypoint.new(1, Library.MainColor),
-			});
-		end
-	});
-
-	local NotifyLabel = Library:CreateLabel({
-		Position = UDim2.new(0, 4, 0, 0);
-		Size = UDim2.new(1, -4, 1, 0);
-		Text = Text;
-		TextXAlignment = Enum.TextXAlignment.Left;
-		TextSize = 14;
-		ZIndex = 103;
-		Parent = InnerFrame;
-	});
-
-	local LeftColor = Library:Create('Frame', {
-		BackgroundColor3 = Library.AccentColor;
-		BorderSizePixel = 0;
-		Position = UDim2.new(0, -1, 0, -1);
-		Size = UDim2.new(0, 3, 1, 2);
-		ZIndex = 104;
-		Parent = NotifyOuter;
-	});
-
-	Library:AddToRegistry(LeftColor, {
-		BackgroundColor3 = 'AccentColor';
-	}, true);
-
-	if SoundId then
-		Library:Create('Sound', {
-			SoundId = "rbxassetid://" .. tostring(SoundId):gsub("rbxassetid://", "");
-			Volume = 3;
-			PlayOnRemove = true;
-			Parent = game:GetService("SoundService");
-		}):Destroy();
-	end
-
-	pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
-
-	task.spawn(function()
-		if typeof(Time) == "Instance" then
-			Time.Destroying:Wait();
-		else
-			task.wait(Time or 5);
-		end
-
-		pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
-
-		task.wait(0.4);
-
-		NotifyOuter:Destroy();
-	end);
 end;
 
 function Library:CreateWindow(...)

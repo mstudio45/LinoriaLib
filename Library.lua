@@ -52,7 +52,7 @@ local Library = {
 
 	Signals = {};
 	ScreenGui = ScreenGui;
-	
+	Window = nil,
 	ActiveTab = nil;
 	Toggled = false;
 	
@@ -64,8 +64,13 @@ local Library = {
 	ShowCustomCursor = true; 
 	VideoLink = "";
 	TotalTabs = 0;
+	KeybindContainer = nil,
+	KeybindFrame = nil,
 
-	NotifyOnError = false
+	NotifyOnError = false,
+	NotificationArea = nil,
+
+	SaveManager = nil
 };
 
 pcall(function() Library.DevicePlatform = InputService:GetPlatform(); end); -- For safety so the UI library doesn't error.
@@ -717,6 +722,7 @@ do
 			Type = 'ColorPicker';
 			Title = type(Info.Title) == 'string' and Info.Title or 'Color picker',
 			Callback = Info.Callback or function(Color) end;
+			Changed = nil
 		};
 
 		function ColorPicker:SetHSVFromRGB(Color)
@@ -1043,6 +1049,31 @@ do
 				self.Container.Visible = false;
 			end
 
+			function ColorPicker:Display()
+				ColorPicker.Value = Color3.fromHSV(ColorPicker.Hue, ColorPicker.Sat, ColorPicker.Vib);
+				SatVibMap.BackgroundColor3 = Color3.fromHSV(ColorPicker.Hue, 1, 1);
+	
+				Library:Create(DisplayFrame, {
+					BackgroundColor3 = ColorPicker.Value;
+					BackgroundTransparency = ColorPicker.Transparency;
+					BorderColor3 = Library:GetDarkerColor(ColorPicker.Value);
+				});
+	
+				if TransparencyBoxInner then
+					TransparencyBoxInner.BackgroundColor3 = ColorPicker.Value;
+					TransparencyCursor.Position = UDim2.new(1 - ColorPicker.Transparency, 0, 0, 0);
+				end;
+	
+				CursorOuter.Position = UDim2.new(ColorPicker.Sat, 0, 1 - ColorPicker.Vib, 0);
+				HueCursor.Position = UDim2.new(0, 0, ColorPicker.Hue, 0);
+	
+				HueBox.Text = '#' .. ColorPicker.Value:ToHex()
+				RgbBox.Text = table.concat({ math.floor(ColorPicker.Value.R * 255), math.floor(ColorPicker.Value.G * 255), math.floor(ColorPicker.Value.B * 255) }, ', ')
+	
+				Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value);
+				Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value);
+			end;
+
 			function ContextMenu:AddOption(Str, Callback)
 				if type(Callback) ~= 'function' then
 					Callback = function() end
@@ -1071,6 +1102,12 @@ do
 					Callback()
 				end)
 			end
+
+			function ColorPicker:SetValueRGB(Color, Transparency)
+				ColorPicker.Transparency = Transparency or 0;
+				ColorPicker:SetHSVFromRGB(Color);
+				ColorPicker:Display();
+			end;
 
 			ContextMenu:AddOption('Copy color', function()
 				Library.ColorClipboard = ColorPicker.Value
@@ -1140,31 +1177,6 @@ do
 			ColorPicker:Display()
 		end)
 
-		function ColorPicker:Display()
-			ColorPicker.Value = Color3.fromHSV(ColorPicker.Hue, ColorPicker.Sat, ColorPicker.Vib);
-			SatVibMap.BackgroundColor3 = Color3.fromHSV(ColorPicker.Hue, 1, 1);
-
-			Library:Create(DisplayFrame, {
-				BackgroundColor3 = ColorPicker.Value;
-				BackgroundTransparency = ColorPicker.Transparency;
-				BorderColor3 = Library:GetDarkerColor(ColorPicker.Value);
-			});
-
-			if TransparencyBoxInner then
-				TransparencyBoxInner.BackgroundColor3 = ColorPicker.Value;
-				TransparencyCursor.Position = UDim2.new(1 - ColorPicker.Transparency, 0, 0, 0);
-			end;
-
-			CursorOuter.Position = UDim2.new(ColorPicker.Sat, 0, 1 - ColorPicker.Vib, 0);
-			HueCursor.Position = UDim2.new(0, 0, ColorPicker.Hue, 0);
-
-			HueBox.Text = '#' .. ColorPicker.Value:ToHex()
-			RgbBox.Text = table.concat({ math.floor(ColorPicker.Value.R * 255), math.floor(ColorPicker.Value.G * 255), math.floor(ColorPicker.Value.B * 255) }, ', ')
-
-			Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value);
-			Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value);
-		end;
-
 		function ColorPicker:OnChanged(Func)
 			ColorPicker.Changed = Func;
 			Func(ColorPicker.Value)
@@ -1194,12 +1206,6 @@ do
 		function ColorPicker:SetValue(HSV, Transparency)
 			local Color = Color3.fromHSV(HSV[1], HSV[2], HSV[3]);
 
-			ColorPicker.Transparency = Transparency or 0;
-			ColorPicker:SetHSVFromRGB(Color);
-			ColorPicker:Display();
-		end;
-
-		function ColorPicker:SetValueRGB(Color, Transparency)
 			ColorPicker.Transparency = Transparency or 0;
 			ColorPicker:SetHSVFromRGB(Color);
 			ColorPicker:Display();
@@ -1502,7 +1508,7 @@ do
 				elseif Key == 'MB2' then
 					return InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2);
 				else
-					return InputService:IsKeyDown(Enum.KeyCode[KeyPicker.Value]);
+					return InputService:IsKeyDown(Enum.KeyCode[KeyPicker.Value] :: Enum.KeyCode);
 				end;
 			else
 				return KeyPicker.Toggled;
@@ -1722,7 +1728,9 @@ do
 
 	function Funcs:AddButton(...)
 		-- TODO: Eventually redo this
-		local Button = {};
+		local Button = {
+			Tooltip = nil
+		};
 		local function ProcessButtonParams(Class, Obj, ...)
 			local Props = select(1, ...)
 			if type(Props) == 'table' then
@@ -1872,7 +1880,9 @@ do
 
 
 		function Button:AddButton(...)
-			local SubButton = {}
+			local SubButton = {
+				Tooltip = nil
+			}
 
 			ProcessButtonParams('SubButton', SubButton, ...)
 
@@ -1957,6 +1967,7 @@ do
 			Finished = Info.Finished or false;
 			Type = 'Input';
 			Callback = Info.Callback or function(Value) end;
+			Changed = nil;
 		};
 
 		local Groupbox = self;
@@ -2551,6 +2562,7 @@ do
 			Type = 'Dropdown';
 			SpecialType = Info.SpecialType; -- can be either 'Player' or 'Team'
 			Callback = Info.Callback or function(Value) end;
+			Changed = nil;
 		};
 
 		local Groupbox = self;

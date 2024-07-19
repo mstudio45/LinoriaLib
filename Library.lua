@@ -3670,11 +3670,12 @@ function Library:CreateWindow(...)
 			Outer.Visible = true
 
 			if Library.ShowCustomCursor and Drawing then
-				local Cursor = Drawing.new("Triangle")
-				Cursor.Thickness = 1
+				local Cursor = Drawing.new("Square")
+				Cursor.Size = Vector2.new(8, 8)
 				Cursor.Filled = true
 				Cursor.Visible = true
-				local CursorOutline = Drawing.new("Triangle")
+				local CursorOutline = Drawing.new("Square")
+				CursorOutline.Size = Vector2.new(8, 8)
 				CursorOutline.Thickness = 1
 				CursorOutline.Filled = false
 				CursorOutline.Color = Color3.new(0, 0, 0)
@@ -3686,12 +3687,8 @@ function Library:CreateWindow(...)
 					local mPos = InputService:GetMouseLocation()
 					local X, Y = mPos.X, mPos.Y
 					Cursor.Color = Library.AccentColor
-					Cursor.PointA = Vector2.new(X, Y)
-					Cursor.PointB = Vector2.new(X + 16, Y + 6)
-					Cursor.PointC = Vector2.new(X + 6, Y + 16)
-					CursorOutline.PointA = Cursor.PointA
-					CursorOutline.PointB = Cursor.PointB
-					CursorOutline.PointC = Cursor.PointC
+					Cursor.Position = Vector2.new(X - 4, Y - 4)
+					CursorOutline.Position = Cursor.Position
 					if not (Toggled and ScreenGui.Parent and Library.ShowCustomCursor) then
 						InputService.MouseIconEnabled = OldMouseIconState
 						Cursor:Destroy()

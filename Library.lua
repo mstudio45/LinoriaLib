@@ -80,7 +80,6 @@ Library.IsMobile = (Library.DevicePlatform == Enum.Platform.Android or Library.D
 
 if Library.IsMobile then
 	Library.MinSize = Vector2.new(550, 200) -- Make UI little bit smaller.
-
 end
 
 local RainbowStep = 0

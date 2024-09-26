@@ -3168,8 +3168,9 @@ function Library:Notify(Text, Time, SoundId)
 	YSize = YSize + 7
 
 	local NotifyOuter = Library:Create('Frame', {
+        AnchorPoint = Vector2.new(SideOffset, 0);
 		BorderColor3 = Color3.new(0, 0, 0);
-		Position = UDim2.new(0, 100, 0, 10);
+		Position = UDim2.new(SideOffset, Library.NotifyFromRightSide and -100 or 100, 0, 10);
 		Size = UDim2.new(0, 0, 0, YSize);
 		ClipsDescendants = true;
 		ZIndex = 100;

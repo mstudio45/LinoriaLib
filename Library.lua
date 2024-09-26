@@ -3169,7 +3169,7 @@
 
         local NotifyOuter = Library:Create('Frame', {
             BorderColor3 = Color3.new(0, 0, 0);
-            Position = UDim2.new(0, 100, 0, 10);
+            Position = UDim2.new(0, Library.NotifyFromRightSide and -100 or 100, 0, 10);
             Size = UDim2.new(0, 0, 0, YSize);
             ClipsDescendants = true;
             ZIndex = 100;
@@ -3227,7 +3227,7 @@
             Parent = InnerFrame;
         });
 
-        local LeftColor = Library:Create('Frame', {
+        local SideColor = Library:Create('Frame', {
             AnchorPoint = Vector2.new(Library.NotifyFromRightSide and 1 or 0, 0)
             BackgroundColor3 = Library.AccentColor;
             BorderSizePixel = 0;
@@ -3237,7 +3237,7 @@
             Parent = NotifyOuter;
         });
 
-        Library:AddToRegistry(LeftColor, {
+        Library:AddToRegistry(SideColor, {
             BackgroundColor3 = 'AccentColor';
         }, true);
 

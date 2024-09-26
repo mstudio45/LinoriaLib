@@ -3162,6 +3162,7 @@ function Library:SetWatermark(Text)
 end;
 
 function Library:Notify(Text, Time, SoundId)
+    local SideOffset = Library.NotifyFromRightSide and 1 or 0
 	local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
 
 	YSize = YSize + 7
@@ -3226,16 +3227,17 @@ function Library:Notify(Text, Time, SoundId)
 		Parent = InnerFrame;
 	});
 
-	local LeftColor = Library:Create('Frame', {
+	local SideColor = Library:Create('Frame', {
+        AnchorPoint = Vector2.new(SideOffset, 0);
 		BackgroundColor3 = Library.AccentColor;
 		BorderSizePixel = 0;
-		Position = UDim2.new(0, -1, 0, -1);
+		Position = UDim2.new(SideOffset, -1, 0, -1);
 		Size = UDim2.new(0, 3, 1, 2);
 		ZIndex = 104;
 		Parent = NotifyOuter;
 	});
 
-	Library:AddToRegistry(LeftColor, {
+	Library:AddToRegistry(SideColor, {
 		BackgroundColor3 = 'AccentColor';
 	}, true);
 

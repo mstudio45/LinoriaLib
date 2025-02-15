@@ -324,6 +324,27 @@ local SaveManager = {} do
     end
 
     --// Auto Load \\--
+    function SaveManager:GetAutoloadConfig()
+        SaveManager:CheckFolderTree()
+
+        local autoLoadPath = self.Folder .. "/settings/autoload.txt"
+        if SaveManager:CheckSubFolder(true) then
+            autoLoadPath = self.Folder .. "/settings/" .. self.SubFolder .. "/autoload.txt"
+        end
+
+        if isfile(autoLoadPath) then
+            local successRead, name = pcall(readfile, autoLoadPath)
+            if not successRead then
+                return "none"
+            end
+
+            name = tostring(name)
+            return if name == "" then "none" else name
+        end
+
+        return "none"
+    end
+
     function SaveManager:LoadAutoloadConfig()
         SaveManager:CheckFolderTree()
 
@@ -463,7 +484,7 @@ local SaveManager = {} do
             SaveManager.AutoloadLabel:SetText('Current autoload config: none')
         end)
 
-        self.AutoloadLabel = section:AddLabel('Current autoload config: none', true)
+        self.AutoloadLabel = section:AddLabel("Current autoload config: " .. self:GetAutoloadConfig(), true)
 
         -- self:LoadAutoloadConfig()
         self:SetIgnoreIndexes({ 'SaveManager_ConfigList', 'SaveManager_ConfigName' })

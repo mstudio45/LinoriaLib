@@ -779,11 +779,7 @@ Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
 end))
 
 local function Trim(Text: string)
-    if Text == nil then
-        return "";
-    end
-
-    return tostring(Text):match("^%s*(.-)%s*$")
+    return Text:match("^%s*(.-)%s*$")
 end
 
 local BaseAddons = {};

@@ -1253,7 +1253,7 @@ do
         function ColorPicker:OnChanged(Func)
             ColorPicker.Changed = Func;
             
-            Library:SafeCallback(Func, ColorPicker.Value);
+            Library:SafeCallback(Func, ColorPicker.Value, ColorPicker.Transparency);
         end;
 
         if ParentObj.Addons then

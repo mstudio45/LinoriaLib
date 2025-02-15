@@ -5566,13 +5566,12 @@ function Library:CreateWindow(...)
             Outer.Visible = true;
 
             if DrawingLib.drawing_replaced ~= true then
-                local Cursor = DrawingLib.new("Square")
-                Cursor.Size = Vector2.new(8, 8)
+                local Cursor = DrawingLib.new("Triangle")
+                Cursor.Thickness = 1
                 Cursor.Filled = true
                 Cursor.Visible = Library.ShowCustomCursor
 
-                local CursorOutline = DrawingLib.new("Square")
-                CursorOutline.Size = Vector2.new(8, 8)
+                local CursorOutline = DrawingLib.new("Triangle")
                 CursorOutline.Thickness = 1
                 CursorOutline.Filled = false
                 CursorOutline.Color = Color3.new(0, 0, 0)
@@ -5585,9 +5584,13 @@ function Library:CreateWindow(...)
                     local mPos = InputService:GetMouseLocation()
                     local X, Y = mPos.X, mPos.Y
                     Cursor.Color = Library.AccentColor
-                    Cursor.Position = Vector2.new(X - 4, Y - 4)
+                    Cursor.PointA = Vector2.new(X, Y)
+                    Cursor.PointB = Vector2.new(X + 16, Y + 6)
+                    Cursor.PointC = Vector2.new(X + 6, Y + 16)
                     Cursor.Visible = Library.ShowCustomCursor
-                    CursorOutline.Position = Cursor.Position
+                    CursorOutline.PointA = Cursor.PointA
+                    CursorOutline.PointB = Cursor.PointB
+                    CursorOutline.PointC = Cursor.PointC
                     CursorOutline.Visible = Library.ShowCustomCursor
 
                     if not Toggled or (not ScreenGui or not ScreenGui.Parent) then

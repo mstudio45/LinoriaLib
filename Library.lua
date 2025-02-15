@@ -144,17 +144,17 @@ end;
 local function GetPlayers(ExcludeLocalPlayer, ReturnInstances)
     local PlayerList = Players:GetPlayers();
 
-	if ExcludeLocalPlayer then
-		local Idx = table.find(PlayerList, LocalPlayer);
+    if ExcludeLocalPlayer then
+        local Idx = table.find(PlayerList, LocalPlayer);
 
-		if Idx then
-			table.remove(PlayerList, Idx);
-		end
-	end
+        if Idx then
+            table.remove(PlayerList, Idx);
+        end
+    end
 
-	table.sort(PlayerList, function(Player1, Player2)
-		return Player1.Name:lower() < Player2.Name:lower();
-	end)
+    table.sort(PlayerList, function(Player1, Player2)
+        return Player1.Name:lower() < Player2.Name:lower();
+    end)
 
     if ReturnInstances == true then
         return PlayerList;
@@ -171,9 +171,9 @@ end;
 local function GetTeams(ReturnInstances)
     local TeamList = Teams:GetTeams();
 
-	table.sort(TeamList, function(Team1, Team2)
-		return Team1.Name:lower() < Team2.Name:lower();
-	end)
+    table.sort(TeamList, function(Team1, Team2)
+        return Team1.Name:lower() < Team2.Name:lower();
+    end)
 
     if ReturnInstances == true then
         return TeamList;
@@ -195,9 +195,9 @@ function Library:SetDPIScale(value: number)
 end;
 
 function Library:SafeCallback(Func, ...)
-	if not (Func and typeof(Func) == "function") then
-		return
-	end
+    if not (Func and typeof(Func) == "function") then
+        return
+    end
 
     local run = function(func, ...)
         local Success, Response = pcall(func, ...)
@@ -779,7 +779,11 @@ Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
 end))
 
 local function Trim(Text: string)
-	return Text:match("^%s*(.-)%s*$")
+    if Text == nil then
+        return "";
+    end
+
+    return tostring(Text):match("^%s*(.-)%s*$")
 end
 
 local BaseAddons = {};
@@ -1566,7 +1570,7 @@ do
             end;
 
             function KeybindsToggle:SetText(Text)
-				KeybindsToggleLabel.Text = Text
+                KeybindsToggleLabel.Text = Text
             end
 
             function KeybindsToggle:SetVisibility(bool)
@@ -1655,6 +1659,7 @@ do
             local ShowToggle = Library.ShowToggleFrameInKeybinds and KeyPicker.Mode == 'Toggle';
 
             if KeybindsToggle.Loaded then
+                KeybindsToggle:SetNormal(not ShowToggle)
                 KeybindsToggle:SetNormal(not ShowToggle)
 
                 KeybindsToggle:SetVisibility(true);
@@ -2263,16 +2268,16 @@ do
 
         function Dropdown:AddValues(NewValues)
             if typeof(NewValues) == "table" then
-				for _, val in pairs(NewValues) do
-					table.insert(Dropdown.Values, val);
-				end
-			elseif typeof(NewValues) == "string" then
-				table.insert(Dropdown.Values, NewValues);
-			else
-				return;
-			end
+                for _, val in pairs(NewValues) do
+                    table.insert(Dropdown.Values, val);
+                end
+            elseif typeof(NewValues) == "string" then
+                table.insert(Dropdown.Values, NewValues);
+            else
+                return;
+            end
 
-			Dropdown:BuildDropdownList();
+            Dropdown:BuildDropdownList();
         end;
 
         function Dropdown:SetDisabledValues(NewValues)
@@ -2284,18 +2289,18 @@ do
         end
 
         function Dropdown:AddDisabledValues(DisabledValues)
-			if typeof(DisabledValues) == "table" then
-				for _, val in pairs(DisabledValues) do
-					table.insert(Dropdown.DisabledValues, val)
-				end
-			elseif typeof(DisabledValues) == "string" then
-				table.insert(Dropdown.DisabledValues, DisabledValues)
-			else
-				return
-			end
+            if typeof(DisabledValues) == "table" then
+                for _, val in pairs(DisabledValues) do
+                    table.insert(Dropdown.DisabledValues, val)
+                end
+            elseif typeof(DisabledValues) == "string" then
+                table.insert(Dropdown.DisabledValues, DisabledValues)
+            else
+                return
+            end
 
-			Dropdown:BuildDropdownList()
-		end
+            Dropdown:BuildDropdownList()
+        end
 
         function Dropdown:SetVisible(Visibility)
             Dropdown.Visible = Visibility;
@@ -4118,12 +4123,40 @@ do
             Dropdown:BuildDropdownList();
         end;
 
+        function Dropdown:AddValues(NewValues)
+            if typeof(NewValues) == "table" then
+                for _, val in pairs(NewValues) do
+                    table.insert(Dropdown.Values, val);
+                end
+            elseif typeof(NewValues) == "string" then
+                table.insert(Dropdown.Values, NewValues);
+            else
+                return;
+            end
+
+            Dropdown:BuildDropdownList();
+        end;
+
         function Dropdown:SetDisabledValues(NewValues)
             if NewValues then
                 Dropdown.DisabledValues = NewValues;
             end;
 
             Dropdown:BuildDropdownList();
+        end
+
+        function Dropdown:AddDisabledValues(DisabledValues)
+            if typeof(DisabledValues) == "table" then
+                for _, val in pairs(DisabledValues) do
+                    table.insert(Dropdown.DisabledValues, val)
+                end
+            elseif typeof(DisabledValues) == "string" then
+                table.insert(Dropdown.DisabledValues, DisabledValues)
+            else
+                return
+            end
+
+            Dropdown:BuildDropdownList()
         end
 
         function Dropdown:SetVisible(Visibility)
@@ -4583,23 +4616,23 @@ function Library:SetWatermark(Text)
 end;
 
 function Library:SetNotifySide(Side: string)
-	Library.NotifySide = Side;
+    Library.NotifySide = Side;
 end;
 
 function Library:Notify(...)
     local Data = {}
     local Info = select(1, ...)
 
-	if typeof(Info) == "table" then
-		Data.Title = tostring(Info.Title)
-		Data.Description = tostring(Info.Description)
-		Data.Time = Info.Time or 5
-		Data.SoundId = Info.SoundId
-	else
-		Data.Description = tostring(Info)
-		Data.Time = select(2, ...) or 5
-		Data.SoundId = select(3, ...)
-	end
+    if typeof(Info) == "table" then
+        Data.Title = tostring(Info.Title)
+        Data.Description = tostring(Info.Description)
+        Data.Time = Info.Time or 5
+        Data.SoundId = Info.SoundId
+    else
+        Data.Description = tostring(Info)
+        Data.Time = select(2, ...) or 5
+        Data.SoundId = select(3, ...)
+    end
     
     local Side = string.lower(Library.NotifySide);
     local XSize, YSize = Library:GetTextBounds(Data.Description, Library.Font, 14);
@@ -4658,7 +4691,7 @@ function Library:Notify(...)
         AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
         Position = if Side == "left" then UDim2.new(0, 4, 0, 0) else UDim2.new(1, -4, 0, 0);
         Size = UDim2.new(1, -4, 1, 0);
-        Text = (if Data.Title == nil then "" else "[" .. tostring(tostring(Data.Title)) .. "] ") .. tostring(Data.Description);
+        Text = (if Trim(Data["Title"]) == "" then "" else "[" .. tostring(Data.Title) .. "] ") .. tostring(Data.Description);
         TextXAlignment = if Side == "left" then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right;
         TextSize = 14;
         ZIndex = 103;
@@ -4680,29 +4713,29 @@ function Library:Notify(...)
         XSize, YSize = Library:GetTextBounds(NotifyLabel.Text, Library.Font, 14);
         YSize = YSize + 7
     
-		pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
-	end
+        pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
+    end
 
-	function Data:ChangeTitle(NewText)
+    function Data:ChangeTitle(NewText)
         NewText = if NewText == nil then "" else tostring(NewText);
 
         Data.Title = NewText;
-        NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
+        NotifyLabel.Text = (if Trim(Data["Title"]) == "" then "" else "[" .. tostring(Data.Title) .. "] ") .. tostring(Data.Description);
 
         Data:Resize();
-	end
+    end
 
-	function Data:ChangeDescription(NewText)
+    function Data:ChangeDescription(NewText)
         if NewText == nil then return end
         NewText = tostring(NewText);
 
         Data.Description = NewText;
-        NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
+        NotifyLabel.Text = (if Trim(Data["Title"]) == "" then "" else "[" .. tostring(Data.Title) .. "] ") .. tostring(Data.Description);
 
         Data:Resize();
-	end
+    end
 
-	Data:Resize();
+    Data:Resize();
 
     Library:AddToRegistry(SideColor, {
         BackgroundColor3 = 'AccentColor';

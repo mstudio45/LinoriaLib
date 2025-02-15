@@ -4591,11 +4591,12 @@ function Library:Notify(...)
     local Info = select(1, ...)
 
 	if typeof(Info) == "table" then
-		Data.Title = tostring(Info.Title)
+		Data.Title = Info.Title and tostring(Info.Title) or ""
 		Data.Description = tostring(Info.Description)
 		Data.Time = Info.Time or 5
 		Data.SoundId = Info.SoundId
 	else
+        Data.Title = ""
 		Data.Description = tostring(Info)
 		Data.Time = select(2, ...) or 5
 		Data.SoundId = select(3, ...)

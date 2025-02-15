@@ -287,7 +287,7 @@ function Library:MakeDraggable(Instance, Cutoff, IsMainWindow)
                 if IsMainWindow == true and Library.CantDragForced == true then
                     return;
                 end;
-           
+
                 local ObjPos = Vector2.new(
                     Mouse.X - Instance.AbsolutePosition.X,
                     Mouse.Y - Instance.AbsolutePosition.Y
@@ -366,7 +366,7 @@ function Library:MakeDraggableUsingParent(Instance, Parent, Cutoff, IsMainWindow
                 if IsMainWindow == true and Library.CantDragForced == true then
                     return;
                 end;
-  
+
                 local ObjPos = Vector2.new(
                     Mouse.X - Parent.AbsolutePosition.X,
                     Mouse.Y - Parent.AbsolutePosition.Y
@@ -1655,7 +1655,7 @@ do
             local ShowToggle = Library.ShowToggleFrameInKeybinds and KeyPicker.Mode == 'Toggle';
 
             if KeybindsToggle.Loaded then
-		        KeybindsToggle:SetNormal(not ShowToggle)
+				KeybindsToggle:SetNormal(not ShowToggle)
 
                 KeybindsToggle:SetVisibility(true);
                 KeybindsToggle:SetText(string.format('[%s] %s (%s)', KeyPicker.Value, Info.Text, KeyPicker.Mode));
@@ -2511,21 +2511,21 @@ do
     function BaseGroupboxFuncs:AddLabel(...)
         local Data = {}
 
-    	if select(2, ...) ~= nil and typeof(select(2, ...)) == "table" then
+		if select(2, ...) ~= nil and typeof(select(2, ...)) == "table" then
             if select(1, ...) ~= nil then
                 assert(typeof(select(1, ...)) == "string", "Expected string for Idx, got " .. typeof(select(1, ...)))
             end
             
-    		local Params = select(2, ...)
+			local Params = select(2, ...)
 
-    		Data.Text = Params.Text or ""
-    		Data.DoesWrap = Params.DoesWrap or false
-    		Data.Idx = select(1, ...)
-    	else
-    		Data.Text = select(1, ...) or ""
-    		Data.DoesWrap = select(2, ...) or false
+			Data.Text = Params.Text or ""
+			Data.DoesWrap = Params.DoesWrap or false
+			Data.Idx = select(1, ...)
+		else
+			Data.Text = select(1, ...) or ""
+			Data.DoesWrap = select(2, ...) or false
             Data.Idx = select(3, ...) or nil
-    	end
+		end
 
         Data.OriginalText = Data.Text;
         
@@ -2900,7 +2900,7 @@ do
             Finished = Info.Finished or false;
             Visible = if typeof(Info.Visible) == "boolean" then Info.Visible else true;
             Disabled = if typeof(Info.Disabled) == "boolean" then Info.Disabled else false;
-	    AllowEmpty = if typeof(Info.AllowEmpty) == "boolean" then Info.AllowEmpty else true;
+			AllowEmpty = if typeof(Info.AllowEmpty) == "boolean" then Info.AllowEmpty else true;
             EmptyReset = if typeof(Info.EmptyReset) == "string" then Info.EmptyReset else "---";
             Type = 'Input';
 
@@ -3029,9 +3029,9 @@ do
         end;
 
         function Textbox:SetValue(Text)
-	    if not Textbox.AllowEmpty and Trim(Text) == "" then
-		Text = Textbox.EmptyReset;
-	    end
+			if not Textbox.AllowEmpty and Trim(Text) == "" then
+				Text = Textbox.EmptyReset;
+			end
 
             if Info.MaxLength and #Text > Info.MaxLength then
                 Text = Text:sub(1, Info.MaxLength);

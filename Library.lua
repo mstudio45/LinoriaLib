@@ -4661,7 +4661,7 @@ function Library:Notify(...)
         AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
         Position = if Side == "left" then UDim2.new(0, 4, 0, 0) else UDim2.new(1, -4, 0, 0);
         Size = UDim2.new(1, -4, 1, 0);
-        Text = if typeof(Data) == "table" then "[" .. Data.Title .. "] " .. tostring(Data.Description) else tostring(Data.Description);
+        Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
         TextXAlignment = if Side == "left" then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right;
         TextSize = 14;
         ZIndex = 103;

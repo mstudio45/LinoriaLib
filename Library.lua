@@ -779,11 +779,7 @@ Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
 end))
 
 local function Trim(Text: string)
-    if Text == nil then
-        return "";
-    end
-
-    return tostring(Text):match("^%s*(.-)%s*$")
+    return Text:match("^%s*(.-)%s*$")
 end
 
 local BaseAddons = {};
@@ -1248,14 +1244,14 @@ do
             HueBox.Text = '#' .. ColorPicker.Value:ToHex()
             RgbBox.Text = table.concat({ math.floor(ColorPicker.Value.R * 255), math.floor(ColorPicker.Value.G * 255), math.floor(ColorPicker.Value.B * 255) }, ', ')
 
-            Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value);
-            Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value);
+            Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value, ColorPicker.Transparency);
+            Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value, ColorPicker.Transparency);
         end;
 
         function ColorPicker:OnChanged(Func)
             ColorPicker.Changed = Func;
             
-            Library:SafeCallback(Func, ColorPicker.Value);
+            Library:SafeCallback(Func, ColorPicker.Value, ColorPicker.Transparency);
         end;
 
         if ParentObj.Addons then
@@ -2209,7 +2205,6 @@ do
                                 Selected = Try;
 
                                 if Selected then
-                                    warn(Value, StringValue, typeof(Value), typeof(StringValue))
                                     Dropdown.Value[Value] = true;
                                 else
                                     Dropdown.Value[Value] = nil;
@@ -4066,7 +4061,6 @@ do
                                 Selected = Try;
 
                                 if Selected then
-                                    warn(Value, StringValue, typeof(Value), typeof(StringValue))
                                     Dropdown.Value[Value] = true;
                                 else
                                     Dropdown.Value[Value] = nil;
@@ -4623,11 +4617,12 @@ function Library:Notify(...)
     local Info = select(1, ...)
 
     if typeof(Info) == "table" then
-        Data.Title = tostring(Info.Title)
+        Data.Title = Info.Title and tostring(Info.Title) or ""
         Data.Description = tostring(Info.Description)
         Data.Time = Info.Time or 5
         Data.SoundId = Info.SoundId
     else
+        Data.Title = ""
         Data.Description = tostring(Info)
         Data.Time = select(2, ...) or 5
         Data.SoundId = select(3, ...)
@@ -4690,7 +4685,7 @@ function Library:Notify(...)
         AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
         Position = if Side == "left" then UDim2.new(0, 4, 0, 0) else UDim2.new(1, -4, 0, 0);
         Size = UDim2.new(1, -4, 1, 0);
-        Text = (if Trim(Data["Title"]) == "" then "" else "[" .. tostring(Data.Title) .. "] ") .. tostring(Data.Description);
+        Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
         TextXAlignment = if Side == "left" then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right;
         TextSize = 14;
         ZIndex = 103;
@@ -4719,7 +4714,7 @@ function Library:Notify(...)
         NewText = if NewText == nil then "" else tostring(NewText);
 
         Data.Title = NewText;
-        NotifyLabel.Text = (if Trim(Data["Title"]) == "" then "" else "[" .. tostring(Data.Title) .. "] ") .. tostring(Data.Description);
+        NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
 
         Data:Resize();
     end
@@ -4729,7 +4724,7 @@ function Library:Notify(...)
         NewText = tostring(NewText);
 
         Data.Description = NewText;
-        NotifyLabel.Text = (if Trim(Data["Title"]) == "" then "" else "[" .. tostring(Data.Title) .. "] ") .. tostring(Data.Description);
+        NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
 
         Data:Resize();
     end

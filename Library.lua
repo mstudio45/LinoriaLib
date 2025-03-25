@@ -5870,8 +5870,8 @@ function Library:CreateWindow(...)
 end;
 
 local function OnPlayerChange()
-    local PlayerList, ExcludedPlayerList = GetPlayers(false, false), GetPlayers(true, false);
-    local StringPlayerList, StringExcludedPlayerList = GetPlayers(false, true), GetPlayers(true, true);
+    local PlayerList, ExcludedPlayerList = GetPlayers(false, true), GetPlayers(true, true);
+    local StringPlayerList, StringExcludedPlayerList = GetPlayers(false, false), GetPlayers(true, false);
 
     for _, Value in next, Options do
         if Value.SetValues and Value.Type == 'Dropdown' and Value.SpecialType == 'Player' then

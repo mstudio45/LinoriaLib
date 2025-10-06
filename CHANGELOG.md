@@ -1,3 +1,10 @@
+## 5.10.2025
+```diff
++ Added support for modifier keys in KeyPicker (for example: LCtrl + E)
++ All Changed callbacks no longer fire on element initialization
++ :OnChanged() callback no longer fires when you call the set function
+```
+
 ### 22.09.2025
 ```diff
 + Changed getgenv().Linoria to reference the Library table

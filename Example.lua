@@ -526,7 +526,6 @@ LeftGroupBox:AddLabel('Keybind'):AddKeyPicker('KeyPicker', {
 	Default = 'MB2', -- String as the name of the keybind (MB1, MB2 for mouse buttons)
 	SyncToggleState = false,
 
-
 	-- You can define custom Modes but I have never had a use for it.
 	Mode = 'Toggle', -- Modes: Always, Toggle, Hold, Press (example down below)
 
@@ -538,10 +537,10 @@ LeftGroupBox:AddLabel('Keybind'):AddKeyPicker('KeyPicker', {
 		print('[cb] Keybind clicked!', Value)
 	end,
 
-	-- Occurs when the keybind itself is changed, `New` is a KeyCode Enum OR a UserInputType Enum
-	ChangedCallback = function(New)
-		print('[cb] Keybind changed!', New)
-	end
+	-- Occurs when the keybind itself is changed, `NewKey` is a KeyCode Enum OR a UserInputType Enum, `NewModifiers` is a table with KeyCode Enum(s) or nil
+	ChangedCallback = function(NewKey, NewModifiers)
+		print("[cb] Keybind changed!", table.unpack(NewModifiers or {}), NewKey)
+	end,
 })
 
 -- OnClick is only fired when you press the keybind and the mode is Toggle
@@ -551,7 +550,7 @@ Options.KeyPicker:OnClick(function()
 end)
 
 Options.KeyPicker:OnChanged(function()
-	print('Keybind changed!', Options.KeyPicker.Value)
+	print("Keybind changed!", table.unpack(Options.KeyPicker.Modifiers or {}), Options.KeyPicker.Value)
 end)
 
 task.spawn(function()
@@ -665,6 +664,8 @@ Library:SetWatermarkVisibility(true)
 local FrameTimer = tick()
 local FrameCounter = 0;
 local FPS = 60;
+local GetPing = (function() return math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue()) end)
+local CanDoPing = pcall(function() return GetPing(); end)
 
 local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(function()
 	FrameCounter += 1;
@@ -675,10 +676,16 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
 		FrameCounter = 0;
 	end;
 
-	Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
-		math.floor(FPS),
-		math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
-	));
+	if CanDoPing then
+		Library:SetWatermark(('LinoriaLib demo | %d fps | %d ms'):format(
+			math.floor(FPS),
+			GetPing()
+		));
+	else
+		Library:SetWatermark(('LinoriaLib demo | %d fps'):format(
+			math.floor(FPS)
+		));
+	end
 end);
 
 Library:OnUnload(function()

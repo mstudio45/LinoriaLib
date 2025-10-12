@@ -246,6 +246,61 @@ local function Trim(Text: string)
     return Text:match("^%s*(.-)%s*$");
 end;
 
+--// Icon Module \\--
+type Icon = {
+    Url: string,
+    Id: number,
+    IconName: string,
+    ImageRectOffset: Vector2,
+    ImageRectSize: Vector2,
+}
+
+type IconModule = {
+    Icons: { string },
+    GetAsset: (Name: string) -> Icon?,
+}
+
+local FetchIcons, Icons = pcall(function()
+    return (loadstring(
+        game:HttpGet("https://raw.githubusercontent.com/deividcomsono/lucide-roblox-direct/refs/heads/main/source.lua")
+    ) :: () -> IconModule)()
+end)
+
+function IsValidCustomIcon(Icon: string)
+    return typeof(Icon) == "string"
+        and (Icon:match("rbxasset") or Icon:match("roblox%.com/asset/%?id=") or Icon:match("rbxthumb://type="))
+end
+
+function Library:GetIcon(IconName: string)
+    if not FetchIcons then
+        return
+    end
+
+    local Success, Icon = pcall(Icons.GetAsset, IconName)
+    if not Success then
+        return
+    end
+    return Icon
+end
+
+function Library:GetCustomIcon(IconName: string)
+    if not IsValidCustomIcon(IconName) then
+        return Library:GetIcon(IconName)
+    else
+        return {
+            Url = IconName,
+            ImageRectOffset = Vector2.zero,
+            ImageRectSize = Vector2.zero,
+            Custom = true,
+        }
+    end
+end
+
+function Library:SetIconModule(module: IconModule)
+    FetchIcons = true
+    Icons = module
+end
+
 --// Library Functions \\--
 function Library:Validate(Table: { [string]: any }, Template: { [string]: any }): { [string]: any }
     if typeof(Table) ~= "table" then
@@ -862,7 +917,8 @@ Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
 end))
 
 --// Templates \\--
-local Templates = { -- TO-DO: do it for all elements.
+local Templates = { -- TO-DO: do it for missing elements.
+    --// Window \\--
     Window = {
         Title = "No Title",
         AutoShow = false,
@@ -875,6 +931,21 @@ local Templates = { -- TO-DO: do it for all elements.
         ShowCustomCursor = true,
         UnlockMouseWhileOpen = true,
         Center = false
+    },
+
+    --// Elements \\--
+    Video = {
+        Video = "",
+        Looped = false,
+        Playing = false,
+        Volume = 1,
+        Height = 200,
+        Visible = true,
+    },
+    UIPassthrough = {
+        Instance = nil,
+        Height = 24,
+        Visible = true,
     }
 }
 
@@ -2223,6 +2294,7 @@ do
             Visible = if typeof(Info.Visible) == "boolean" then Info.Visible else true;
             Disabled = if typeof(Info.Disabled) == "boolean" then Info.Disabled else false;
             Callback = Info.Callback or function(Value) end;
+            Changed = Info.Changed or function(Value) end;
 
             OriginalText = Info.Text; Text = Info.Text;
             ExcludeLocalPlayer = Info.ExcludeLocalPlayer;
@@ -4109,6 +4181,7 @@ do
             Visible = if typeof(Info.Visible) == "boolean" then Info.Visible else true;
             Disabled = if typeof(Info.Disabled) == "boolean" then Info.Disabled else false;
             Callback = Info.Callback or function(Value) end;
+            Changed = Info.Changed or function(Value) end;
 
             OriginalText = Info.Text; Text = Info.Text;
             ExcludeLocalPlayer = Info.ExcludeLocalPlayer;
@@ -4734,7 +4807,6 @@ do
     end;
 
     function BaseGroupboxFuncs:AddViewport(Idx, Info)
-        -- https://github.com/deividcomsono/Obsidian/blob/main/Library.lua#L4133 --
         local Dragging, Pinching = false, false
         local LastMousePos, LastPinchDist = nil, 0
 
@@ -5009,7 +5081,6 @@ do
     end;
 
     function BaseGroupboxFuncs:AddImage(Idx, Info)
-        -- https://github.com/deividcomsono/Obsidian/blob/main/Library.lua#L4395 --
         local Image = {
             Image = Info.Image,
             Color = Info.Color,
@@ -5070,20 +5141,12 @@ do
             Parent = Box,
         }
 
-        if
-            not (
-                ImageProperties.Image:match("rbxasset")
-                or ImageProperties.Image:match("roblox%.com/asset/%?id=")
-                or ImageProperties.Image:match("rbxthumb://type=AvatarHeadShot")
-            )
-        then
-            local Icon = Library:GetIcon(ImageProperties.Image)
-            assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
+        local Icon = Library:GetCustomIcon(ImageProperties.Image)
+        assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
 
-            ImageProperties.Image = Icon.Url
-            ImageProperties.ImageRectOffset = Icon.ImageRectOffset
-            ImageProperties.ImageRectSize = Icon.ImageRectSize
-        end
+        ImageProperties.Image = Icon.Url
+        ImageProperties.ImageRectOffset = Icon.ImageRectOffset
+        ImageProperties.ImageRectSize = Icon.ImageRectSize
 
         local ImageLabel = Library:Create("ImageLabel", ImageProperties)
 
@@ -5098,20 +5161,12 @@ do
         function Image:SetImage(NewImage: string)
             assert(typeof(NewImage) == "string", "Image must be a string.")
 
-            if
-                not (
-                    NewImage:match("rbxasset")
-                    or NewImage:match("roblox%.com/asset/%?id=")
-                    or NewImage:match("rbxthumb://type=AvatarHeadShot")
-                )
-            then
-                local Icon = Library:GetIcon(NewImage)
-                assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
+            local Icon = Library:GetCustomIcon(NewImage)
+            assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
 
-                NewImage = Icon.Url
-                Image.RectOffset = Icon.ImageRectOffset
-                Image.RectSize = Icon.ImageRectSize
-            end
+            NewImage = Icon.Url
+            Image.RectOffset = Icon.ImageRectOffset
+            Image.RectSize = Icon.ImageRectSize
 
             ImageLabel.Image = NewImage
             Image.Image = NewImage
@@ -5179,6 +5234,219 @@ do
         Library:UpdateDependencyGroupboxes();
 
         return Image
+    end;
+
+    function BaseGroupboxFuncs:AddVideo(Idx, Info)
+        Info = Library:Validate(Info, Templates.Video)
+
+        local Blank = nil;
+        local Groupbox = self;
+        local Container = Groupbox.Container;
+
+        local Video = {
+            Video = Info.Video,
+            Looped = Info.Looped,
+            Playing = Info.Playing,
+            Volume = Info.Volume,
+            Height = Info.Height,
+            Visible = Info.Visible,
+
+            Type = "Video",
+        }
+
+        local Holder = Library:Create("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -4, 0, Info.Height),
+            Visible = Video.Visible,
+            Parent = Container,
+        })
+
+        local Box = Library:Create("Frame", {
+            BackgroundColor3 = Library.MainColor,
+            BorderColor3 = Library.OutlineColor,
+            BorderSizePixel = 1,
+            BorderMode = Enum.BorderMode.Inset,
+            Size = UDim2.fromScale(1, 1),
+            ZIndex = 6,
+            Parent = Holder,
+        })
+
+        Library:AddToRegistry(Box, {
+            BackgroundColor3 = 'MainColor';
+            BorderColor3 = 'OutlineColor';
+        });
+
+        Library:Create("UIPadding", {
+            PaddingBottom = UDim.new(0, 3),
+            PaddingLeft = UDim.new(0, 8),
+            PaddingRight = UDim.new(0, 8),
+            PaddingTop = UDim.new(0, 4),
+            Parent = Box,
+        });
+
+        local VideoFrameInstance = Library:Create("VideoFrame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.fromScale(1, 1),
+            Video = Video.Video,
+            Looped = Video.Looped,
+            Volume = Video.Volume,
+            ZIndex = 7,
+            Parent = Box,
+        })
+
+        VideoFrameInstance.Playing = Video.Playing
+
+        function Video:SetHeight(Height: number)
+            assert(Height > 0, "Height must be greater than 0.")
+
+            Video.Height = Height
+            Holder.Size = UDim2.new(1, -4, 0, Height)
+            Groupbox:Resize()
+        end
+
+        function Video:SetVideo(NewVideo: string)
+            assert(typeof(NewVideo) == "string", "Video must be a string.")
+
+            VideoFrameInstance.Video = NewVideo
+            Video.Video = NewVideo
+        end
+
+        function Video:SetLooped(Looped: boolean)
+            assert(typeof(Looped) == "boolean", "Looped must be a boolean.")
+
+            VideoFrameInstance.Looped = Looped
+            Video.Looped = Looped
+        end
+
+        function Video:SetVolume(Volume: number)
+            assert(typeof(Volume) == "number", "Volume must be a number between 0 and 10.")
+
+            VideoFrameInstance.Volume = Volume
+            Video.Volume = Volume
+        end
+
+        function Video:SetPlaying(Playing: boolean)
+            assert(typeof(Playing) == "boolean", "Playing must be a boolean.")
+
+            VideoFrameInstance.Playing = Playing
+            Video.Playing = Playing
+        end
+
+        function Video:Play()
+            VideoFrameInstance.Playing = true
+            Video.Playing = true
+        end
+
+        function Video:Pause()
+            VideoFrameInstance.Playing = false
+            Video.Playing = false
+        end
+
+        function Video:SetVisible(Visible: boolean)
+            Video.Visible = Visible;
+
+            Holder.Visible = Video.Visible;
+            if Blank then Blank.Visible = Video.Visible end;
+
+            Groupbox:Resize()
+        end
+
+        Video:SetHeight(Video.Height)
+
+        Blank = Groupbox:AddBlank(10, Video.Visible);
+        Groupbox:Resize();
+
+        Video.Holder = Holder;
+        Video.Container = Container;
+        Video.VideoFrame = VideoFrameInstance;
+
+        Options[Idx] = Video
+
+        Library:UpdateDependencyBoxes();
+        Library:UpdateDependencyGroupboxes();
+
+        return Video
+    end;
+
+    function BaseGroupboxFuncs:AddUIPassthrough(Idx, Info)
+        Info = Library:Validate(Info, Templates.UIPassthrough)
+
+        local Blank = nil;
+        local Groupbox = self;
+        local Container = Groupbox.Container;
+
+        assert(Info.Instance, "Instance must be provided.")
+        assert(
+            typeof(Info.Instance) == "Instance" and Info.Instance:IsA("GuiBase2d"),
+            "Instance must inherit from GuiBase2d."
+        )
+        assert(typeof(Info.Height) == "number" and Info.Height > 0, "Height must be a number greater than 0.")
+
+        local Passthrough = {
+            Instance = Info.Instance,
+            Height = Info.Height,
+            Visible = Info.Visible,
+
+            Type = "UIPassthrough",
+        }
+
+        local Holder = Library:Create("Frame", {
+            BackgroundTransparency = 1,
+            Size = UDim2.new(1, -4, 0, Info.Height),
+            Visible = Passthrough.Visible,
+            Parent = Container,
+        })
+
+        Passthrough.Instance.Parent = Holder
+        pcall(function() Passthrough.Instance.ZIndex = 7 end)
+
+        function Passthrough:SetHeight(Height: number)
+            assert(typeof(Height) == "number" and Height > 0, "Height must be a number greater than 0.")
+
+            Passthrough.Height = Height
+            Holder.Size = UDim2.new(1, -4, 0, Height)
+            Groupbox:Resize()
+        end
+
+        function Passthrough:SetInstance(Instance: Instance)
+            assert(Instance, "Instance must be provided.")
+            assert(
+                typeof(Instance) == "Instance" and Instance:IsA("GuiBase2d"),
+                "Instance must inherit from GuiBase2d."
+            )
+
+            if Passthrough.Instance then
+                Passthrough.Instance.Parent = nil
+            end
+
+            Passthrough.Instance = Instance
+            Passthrough.Instance.Parent = Holder
+            pcall(function() Passthrough.Instance.ZIndex = 7 end)
+        end
+
+        function Passthrough:SetVisible(Visible: boolean)
+            Passthrough.Visible = Visible
+
+            Holder.Visible = Passthrough.Visible
+            if Blank then Blank.Visible = Passthrough.Visible end;
+
+            Groupbox:Resize()
+        end
+
+        Passthrough:SetHeight(Passthrough.Height)
+
+        Blank = Groupbox:AddBlank(10, Passthrough.Visible);
+        Groupbox:Resize();
+
+        Passthrough.Holder = Holder;
+        Passthrough.Container = Container;
+
+        Options[Idx] = Passthrough;
+
+        Library:UpdateDependencyBoxes();
+        Library:UpdateDependencyGroupboxes();
+
+        return Passthrough
     end;
 
     function BaseGroupboxFuncs:AddDependencyBox()
@@ -6409,7 +6677,9 @@ function Library:CreateWindow(...)
             });
 
             function Tabbox:AddTab(Name)
-                local Tab = {};
+                local Tab = {
+                    Container = nil;
+                };
 
                 local Button = Library:Create('Frame', {
                     BackgroundColor3 = Library.MainColor;

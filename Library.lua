@@ -157,6 +157,7 @@ end
 
 Library.MinSize = if Library.IsMobile then Vector2.new(550, 200) else Vector2.new(550, 300);
 
+--// Rainbow Handler \\--
 local RainbowStep = 0
 local Hue = 0
 local DPIScale = 1
@@ -178,6 +179,7 @@ table.insert(Library.Signals, RunService.RenderStepped:Connect(function(Delta)
     end;
 end));
 
+--// Functions \\--
 local function ApplyDPIScale(Position)
     return UDim2.new(Position.X.Scale, Position.X.Offset * DPIScale, Position.Y.Scale, Position.Y.Offset * DPIScale);
 end;
@@ -239,6 +241,31 @@ local function GetTeams(ReturnInstances)
 
     return FixedTeamList;
 end;
+
+local function Trim(Text: string)
+    return Text:match("^%s*(.-)%s*$");
+end;
+
+--// Library Functions \\--
+function Library:Validate(Table: { [string]: any }, Template: { [string]: any }): { [string]: any }
+    if typeof(Table) ~= "table" then
+        return Template
+    end
+
+    for k, v in pairs(Template) do
+        if typeof(k) == "number" then
+            continue
+        end
+
+        if typeof(v) == "table" then
+            Table[k] = Library:Validate(Table[k], v)
+        elseif Table[k] == nil then
+            Table[k] = v
+        end
+    end
+
+    return Table
+end
 
 function Library:SetDPIScale(value: number) 
     assert(type(value) == "number", "Expected type number for DPI scale but got " .. typeof(value))
@@ -664,7 +691,7 @@ function Library:OnHighlight(HighlightInstance, Instance, Properties, Properties
         end;
     end
     local function doHighlight()
-        if condition and not condition() then undoHighlight() return end
+        if condition and not condition() then undoHighlight(); return end
         local Reg = Library.RegistryMap[Instance];
 
         for Property, ColorIdx in next, Properties do
@@ -676,15 +703,9 @@ function Library:OnHighlight(HighlightInstance, Instance, Properties, Properties
         end;
     end
 
-    HighlightInstance.MouseEnter:Connect(function()
-        doHighlight()
-    end)
-    HighlightInstance.MouseMoved:Connect(function()
-        doHighlight()
-    end)
-    HighlightInstance.MouseLeave:Connect(function()
-        undoHighlight()
-    end)
+    HighlightInstance.MouseEnter:Connect(doHighlight)
+    HighlightInstance.MouseMoved:Connect(doHighlight)
+    HighlightInstance.MouseLeave:Connect(undoHighlight)
 end;
 
 function Library:MouseIsOverOpenedFrame(Input)
@@ -702,6 +723,8 @@ function Library:MouseIsOverOpenedFrame(Input)
             return true;
         end;
     end;
+
+    return false;
 end;
 
 function Library:MouseIsOverFrame(Frame, Input)
@@ -716,6 +739,8 @@ function Library:MouseIsOverFrame(Frame, Input)
 
         return true;
     end;
+
+    return false;
 end;
 
 function Library:UpdateDependencyBoxes()
@@ -836,12 +861,25 @@ Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
     end;
 end))
 
-local function Trim(Text: string)
-    return Text:match("^%s*(.-)%s*$")
-end
+--// Templates \\--
+local Templates = { -- TO-DO: do it for all elements.
+    Window = {
+        Title = "No Title",
+        AutoShow = false,
+        Position = UDim2.fromOffset(175, 50),
+        Size = UDim2.fromOffset(0, 0),
+        AnchorPoint = Vector2.zero,
+        TabPadding = 1,
+        MenuFadeTime = 0.2,
+        NotifySide = "Left",
+        ShowCustomCursor = true,
+        UnlockMouseWhileOpen = true,
+        Center = false
+    }
+}
 
+--// Addons \\--
 local BaseAddons = {};
-
 do
     local BaseAddonsFuncs = {};
 
@@ -2812,8 +2850,8 @@ do
     end;
 end;
 
+--// Groupbox Addons \\--
 local BaseGroupbox = {};
-
 do
     local BaseGroupboxFuncs = {};
 
@@ -5338,42 +5376,81 @@ do
     end;
 end;
 
--- < Create other UI elements >
+--// Keybinds UI \\--
 do
-    Library.LeftNotificationArea = Library:Create('Frame', {
-        BackgroundTransparency = 1;
-        Position = UDim2.new(0, 0, 0, 40);
-        Size = UDim2.new(0, 300, 0, 200);
+    local KeybindOuter = Library:Create('Frame', {
+        AnchorPoint = Vector2.new(0, 0.5);
+        BorderColor3 = Color3.new(0, 0, 0);
+        Position = UDim2.new(0, 10, 0.5, 0);
+        Size = UDim2.new(0, 210, 0, 20);
+        Visible = false;
         ZIndex = 100;
         Parent = ScreenGui;
     });
 
-    Library:Create('UIListLayout', {
-        Padding = UDim.new(0, 4);
-        FillDirection = Enum.FillDirection.Vertical;
-        SortOrder = Enum.SortOrder.LayoutOrder;
-        Parent = Library.LeftNotificationArea;
+    local KeybindInner = Library:Create('Frame', {
+        BackgroundColor3 = Library.MainColor;
+        BorderColor3 = Library.OutlineColor;
+        BorderMode = Enum.BorderMode.Inset;
+        Size = UDim2.new(1, 0, 1, 0);
+        ZIndex = 101;
+        Parent = KeybindOuter;
     });
 
+    Library:AddToRegistry(KeybindInner, {
+        BackgroundColor3 = 'MainColor';
+        BorderColor3 = 'OutlineColor';
+    }, true);
 
-    Library.RightNotificationArea = Library:Create('Frame', {
-        AnchorPoint = Vector2.new(1, 0);
+    local ColorFrame = Library:Create('Frame', {
+        BackgroundColor3 = Library.AccentColor;
+        BorderSizePixel = 0;
+        Size = UDim2.new(1, 0, 0, 2);
+        ZIndex = 102;
+        Parent = KeybindInner;
+    });
+
+    Library:AddToRegistry(ColorFrame, {
+        BackgroundColor3 = 'AccentColor';
+    }, true);
+
+    local _KeybindLabel = Library:CreateLabel({
+        Size = UDim2.new(1, 0, 0, 20);
+        Position = UDim2.fromOffset(5, 2),
+        TextXAlignment = Enum.TextXAlignment.Left,
+
+        Text = 'Keybinds';
+        ZIndex = 104;
+        Parent = KeybindInner;
+    });
+    Library:MakeDraggable(KeybindOuter);
+
+    local KeybindContainer = Library:Create('Frame', {
         BackgroundTransparency = 1;
-        Position = UDim2.new(1, 0, 0, 40);
-        Size = UDim2.new(0, 300, 0, 200);
-        ZIndex = 100;
-        Parent = ScreenGui;
+        Size = UDim2.new(1, 0, 1, -20);
+        Position = UDim2.new(0, 0, 0, 20);
+        ZIndex = 1;
+        Parent = KeybindInner;
     });
 
     Library:Create('UIListLayout', {
-        Padding = UDim.new(0, 4);
         FillDirection = Enum.FillDirection.Vertical;
-        HorizontalAlignment = Enum.HorizontalAlignment.Right;
         SortOrder = Enum.SortOrder.LayoutOrder;
-        Parent = Library.RightNotificationArea;
+        Parent = KeybindContainer;
     });
 
+    Library:Create('UIPadding', {
+        PaddingLeft = UDim.new(0, 5),
+        Parent = KeybindContainer,
+    })
 
+    Library.KeybindFrame = KeybindOuter;
+    Library.KeybindContainer = KeybindContainer;
+    Library:MakeDraggable(KeybindOuter);
+end;
+
+--// Watermark \\--
+do
     local WatermarkOuter = Library:Create('Frame', {
         BorderColor3 = Color3.new(0, 0, 0);
         Position = UDim2.new(0, 100, 0, -25);
@@ -5436,299 +5513,257 @@ do
     Library.WatermarkText = WatermarkLabel;
     Library:MakeDraggable(Library.Watermark);
 
-    local KeybindOuter = Library:Create('Frame', {
-        AnchorPoint = Vector2.new(0, 0.5);
-        BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 10, 0.5, 0);
-        Size = UDim2.new(0, 210, 0, 20);
-        Visible = false;
+    function Library:SetWatermarkVisibility(Bool)
+        Library.Watermark.Visible = Bool;
+    end;
+
+    function Library:SetWatermark(Text)
+        local X, Y = Library:GetTextBounds(Text, Library.Font, 14);
+        Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3);
+        Library:SetWatermarkVisibility(true)
+
+        Library.WatermarkText.Text = Text;
+    end;
+end;
+
+--// Notifications \\--
+do
+    Library.LeftNotificationArea = Library:Create('Frame', {
+        BackgroundTransparency = 1;
+        Position = UDim2.new(0, 0, 0, 40);
+        Size = UDim2.new(0, 300, 0, 200);
         ZIndex = 100;
         Parent = ScreenGui;
     });
 
-    local KeybindInner = Library:Create('Frame', {
-        BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.OutlineColor;
-        BorderMode = Enum.BorderMode.Inset;
-        Size = UDim2.new(1, 0, 1, 0);
-        ZIndex = 101;
-        Parent = KeybindOuter;
+    Library:Create('UIListLayout', {
+        Padding = UDim.new(0, 4);
+        FillDirection = Enum.FillDirection.Vertical;
+        SortOrder = Enum.SortOrder.LayoutOrder;
+        Parent = Library.LeftNotificationArea;
     });
 
-    Library:AddToRegistry(KeybindInner, {
-        BackgroundColor3 = 'MainColor';
-        BorderColor3 = 'OutlineColor';
-    }, true);
 
-    local ColorFrame = Library:Create('Frame', {
-        BackgroundColor3 = Library.AccentColor;
-        BorderSizePixel = 0;
-        Size = UDim2.new(1, 0, 0, 2);
-        ZIndex = 102;
-        Parent = KeybindInner;
-    });
-
-    Library:AddToRegistry(ColorFrame, {
-        BackgroundColor3 = 'AccentColor';
-    }, true);
-
-    local KeybindLabel = Library:CreateLabel({
-        Size = UDim2.new(1, 0, 0, 20);
-        Position = UDim2.fromOffset(5, 2),
-        TextXAlignment = Enum.TextXAlignment.Left,
-
-        Text = 'Keybinds';
-        ZIndex = 104;
-        Parent = KeybindInner;
-    });
-    Library:MakeDraggable(KeybindOuter);
-
-    local KeybindContainer = Library:Create('Frame', {
+    Library.RightNotificationArea = Library:Create('Frame', {
+        AnchorPoint = Vector2.new(1, 0);
         BackgroundTransparency = 1;
-        Size = UDim2.new(1, 0, 1, -20);
-        Position = UDim2.new(0, 0, 0, 20);
-        ZIndex = 1;
-        Parent = KeybindInner;
+        Position = UDim2.new(1, 0, 0, 40);
+        Size = UDim2.new(0, 300, 0, 200);
+        ZIndex = 100;
+        Parent = ScreenGui;
     });
 
     Library:Create('UIListLayout', {
+        Padding = UDim.new(0, 4);
         FillDirection = Enum.FillDirection.Vertical;
+        HorizontalAlignment = Enum.HorizontalAlignment.Right;
         SortOrder = Enum.SortOrder.LayoutOrder;
-        Parent = KeybindContainer;
+        Parent = Library.RightNotificationArea;
     });
+        
+    function Library:SetNotifySide(Side: string)
+        Library.NotifySide = Side;
+    end;
 
-    Library:Create('UIPadding', {
-        PaddingLeft = UDim.new(0, 5),
-        Parent = KeybindContainer,
-    })
+    function Library:Notify(...)
+        local Data = { Steps = 1 }
+        local Info = select(1, ...)
 
-    Library.KeybindFrame = KeybindOuter;
-    Library.KeybindContainer = KeybindContainer;
-    Library:MakeDraggable(KeybindOuter);
-end;
+        if typeof(Info) == "table" then
+            Data.Title = Info.Title and tostring(Info.Title) or ""
+            Data.Description = tostring(Info.Description)
+            Data.Time = Info.Time or 5
+            Data.SoundId = Info.SoundId
+        else
+            Data.Title = ""
+            Data.Description = tostring(Info)
+            Data.Time = select(2, ...) or 5
+            Data.SoundId = select(3, ...)
+        end
+        
+        local Side = string.lower(Library.NotifySide);
+        local XSize, YSize = Library:GetTextBounds(Data.Description, Library.Font, 14);
+        YSize = YSize + 7
 
-function Library:SetWatermarkVisibility(Bool)
-    Library.Watermark.Visible = Bool;
-end;
-
-function Library:SetWatermark(Text)
-    local X, Y = Library:GetTextBounds(Text, Library.Font, 14);
-    Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3);
-    Library:SetWatermarkVisibility(true)
-
-    Library.WatermarkText.Text = Text;
-end;
-
-function Library:SetNotifySide(Side: string)
-    Library.NotifySide = Side;
-end;
-
-function Library:Notify(...)
-    local Data = { Steps = 1 }
-    local Info = select(1, ...)
-
-    if typeof(Info) == "table" then
-        Data.Title = Info.Title and tostring(Info.Title) or ""
-        Data.Description = tostring(Info.Description)
-        Data.Time = Info.Time or 5
-        Data.SoundId = Info.SoundId
-    else
-        Data.Title = ""
-        Data.Description = tostring(Info)
-        Data.Time = select(2, ...) or 5
-        Data.SoundId = select(3, ...)
-    end
-    
-    local Side = string.lower(Library.NotifySide);
-    local XSize, YSize = Library:GetTextBounds(Data.Description, Library.Font, 14);
-    YSize = YSize + 7
-
-    local NotifyOuter = Library:Create('Frame', {
-        BorderColor3 = Color3.new(0, 0, 0);
-        Size = UDim2.new(0, 0, 0, YSize);
-        ClipsDescendants = true;
-        ZIndex = 100;
-        Parent = if Side == "left" then Library.LeftNotificationArea else Library.RightNotificationArea;
-    });
-
-    local NotifyInner = Library:Create('Frame', {
-        BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.OutlineColor;
-        BorderMode = Enum.BorderMode.Inset;
-        Size = UDim2.new(1, 0, 1, 0);
-        ZIndex = 101;
-        Parent = NotifyOuter;
-    });
-
-    Library:AddToRegistry(NotifyInner, {
-        BackgroundColor3 = 'MainColor';
-        BorderColor3 = 'OutlineColor';
-    }, true);
-
-    local InnerFrame = Library:Create('Frame', {
-        BackgroundColor3 = Color3.new(1, 1, 1);
-        BorderSizePixel = 0;
-        Position = UDim2.new(0, 1, 0, 1);
-        Size = UDim2.new(1, -2, 1, -2);
-        ZIndex = 102;
-        Parent = NotifyInner;
-    });
-
-    local Gradient = Library:Create('UIGradient', {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
-            ColorSequenceKeypoint.new(1, Library.MainColor),
+        local NotifyOuter = Library:Create('Frame', {
+            BorderColor3 = Color3.new(0, 0, 0);
+            Size = UDim2.new(0, 0, 0, YSize);
+            ClipsDescendants = true;
+            ZIndex = 100;
+            Parent = if Side == "left" then Library.LeftNotificationArea else Library.RightNotificationArea;
         });
-        Rotation = -90;
-        Parent = InnerFrame;
-    });
 
-    Library:AddToRegistry(Gradient, {
-        Color = function()
-            return ColorSequence.new({
+        local NotifyInner = Library:Create('Frame', {
+            BackgroundColor3 = Library.MainColor;
+            BorderColor3 = Library.OutlineColor;
+            BorderMode = Enum.BorderMode.Inset;
+            Size = UDim2.new(1, 0, 1, 0);
+            ZIndex = 101;
+            Parent = NotifyOuter;
+        });
+
+        Library:AddToRegistry(NotifyInner, {
+            BackgroundColor3 = 'MainColor';
+            BorderColor3 = 'OutlineColor';
+        }, true);
+
+        local InnerFrame = Library:Create('Frame', {
+            BackgroundColor3 = Color3.new(1, 1, 1);
+            BorderSizePixel = 0;
+            Position = UDim2.new(0, 1, 0, 1);
+            Size = UDim2.new(1, -2, 1, -2);
+            ZIndex = 102;
+            Parent = NotifyInner;
+        });
+
+        local Gradient = Library:Create('UIGradient', {
+            Color = ColorSequence.new({
                 ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
                 ColorSequenceKeypoint.new(1, Library.MainColor),
             });
+            Rotation = -90;
+            Parent = InnerFrame;
+        });
+
+        Library:AddToRegistry(Gradient, {
+            Color = function()
+                return ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+                    ColorSequenceKeypoint.new(1, Library.MainColor),
+                });
+            end
+        });
+
+        local NotifyLabel = Library:CreateLabel({
+            AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
+            Position = if Side == "left" then UDim2.new(0, 4, 0, 0) else UDim2.new(1, -4, 0, 0);
+            Size = UDim2.new(1, -4, 1, 0);
+            Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
+            TextXAlignment = if Side == "left" then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right;
+            TextSize = 14;
+            ZIndex = 103;
+            RichText = true;
+            Parent = InnerFrame;
+        });
+
+        local SideColor = Library:Create('Frame', {
+            AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
+            Position = if Side == "left" then UDim2.new(0, -1, 0, -1) else UDim2.new(1, -1, 0, -1);
+            BackgroundColor3 = Library.AccentColor;
+            BorderSizePixel = 0;
+            Size = UDim2.new(0, 3, 1, 2);
+            ZIndex = 104;
+            Parent = NotifyOuter;
+        });
+
+        function Data:Resize()
+            XSize, YSize = Library:GetTextBounds(NotifyLabel.Text, Library.Font, 14);
+            YSize = YSize + 7
+        
+            pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
         end
-    });
 
-    local NotifyLabel = Library:CreateLabel({
-        AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
-        Position = if Side == "left" then UDim2.new(0, 4, 0, 0) else UDim2.new(1, -4, 0, 0);
-        Size = UDim2.new(1, -4, 1, 0);
-        Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
-        TextXAlignment = if Side == "left" then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right;
-        TextSize = 14;
-        ZIndex = 103;
-        RichText = true;
-        Parent = InnerFrame;
-    });
+        function Data:ChangeTitle(NewText)
+            NewText = if NewText == nil then "" else tostring(NewText);
 
-    local SideColor = Library:Create('Frame', {
-        AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
-        Position = if Side == "left" then UDim2.new(0, -1, 0, -1) else UDim2.new(1, -1, 0, -1);
-        BackgroundColor3 = Library.AccentColor;
-        BorderSizePixel = 0;
-        Size = UDim2.new(0, 3, 1, 2);
-        ZIndex = 104;
-        Parent = NotifyOuter;
-    });
+            Data.Title = NewText;
+            NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
 
-    function Data:Resize()
-        XSize, YSize = Library:GetTextBounds(NotifyLabel.Text, Library.Font, 14);
-        YSize = YSize + 7
-    
+            Data:Resize();
+        end
+
+        function Data:ChangeDescription(NewText)
+            if NewText == nil then return end
+            NewText = tostring(NewText);
+
+            Data.Description = NewText;
+            NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
+
+            Data:Resize();
+        end
+
+        function Data:ChangeStep()
+            -- this is supposed to be empty
+        end
+
+        Data:Resize();
+
+        Library:AddToRegistry(SideColor, {
+            BackgroundColor3 = 'AccentColor';
+        }, true);
+
+        if Data.SoundId then
+            Library:Create('Sound', {
+                SoundId = "rbxassetid://" .. tostring(Data.SoundId):gsub("rbxassetid://", "");
+                Volume = 3;
+                PlayOnRemove = true;
+                Parent = game:GetService("SoundService");
+            }):Destroy();
+        end
+
         pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
-    end
 
-    function Data:ChangeTitle(NewText)
-        NewText = if NewText == nil then "" else tostring(NewText);
+        task.spawn(function()
+            if typeof(Data.Time) == "Instance" then
+                Data.Time.Destroying:Wait();
+            else
+                task.wait(Data.Time or 5);
+            end
 
-        Data.Title = NewText;
-        NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
+            pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
+            task.wait(0.4);
+            NotifyOuter:Destroy();
+        end);
 
-        Data:Resize();
-    end
-
-    function Data:ChangeDescription(NewText)
-        if NewText == nil then return end
-        NewText = tostring(NewText);
-
-        Data.Description = NewText;
-        NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
-
-        Data:Resize();
-    end
-
-    function Data:ChangeStep()
-        -- this is supposed to be empty
-    end
-
-    Data:Resize();
-
-    Library:AddToRegistry(SideColor, {
-        BackgroundColor3 = 'AccentColor';
-    }, true);
-
-    if Data.SoundId then
-        Library:Create('Sound', {
-            SoundId = "rbxassetid://" .. tostring(Data.SoundId):gsub("rbxassetid://", "");
-            Volume = 3;
-            PlayOnRemove = true;
-            Parent = game:GetService("SoundService");
-        }):Destroy();
-    end
-
-    pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
-
-    task.spawn(function()
-        if typeof(Data.Time) == "Instance" then
-            Data.Time.Destroying:Wait();
-        else
-            task.wait(Data.Time or 5);
-        end
-
-        pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
-        task.wait(0.4);
-        NotifyOuter:Destroy();
-    end);
-
-    return Data
+        return Data
+    end;
 end;
 
+--// Window \\--
 function Library:CreateWindow(...)
     local Arguments = { ... }
-    local Config = { AnchorPoint = Vector2.zero }
+    local WindowInfo = Templates.Window
 
-    if typeof(...) == 'table' then
-        Config = ...;
+    if typeof(Arguments[1]) == "table" then
+        WindowInfo = Library:Validate(Arguments[1], Templates.Window)
     else
-        Config.Title = Arguments[1]
-        Config.AutoShow = Arguments[2] or false;
+        WindowInfo = Library:Validate({
+            Title = Arguments[1],
+            AutoShow = Arguments[2] or false
+        }, Templates.Window)
     end
 
-    if typeof(Config.Title) ~= "string" then Config.Title = 'No title' end
-    if typeof(Config.TabPadding) ~= 'number' then Config.TabPadding = 1 end
-    if typeof(Config.MenuFadeTime) ~= 'number' then Config.MenuFadeTime = 0.2 end
-    if typeof(Config.NotifySide) ~= "string" then Library.NotifySide = 'Left' else Library.NotifySide = Config.NotifySide end
-    if typeof(Config.ShowCustomCursor) ~= 'boolean' then Library.ShowCustomCursor = true else Library.ShowCustomCursor = Config.ShowCustomCursor end
-
-    if typeof(Config.Position) ~= 'UDim2' then Config.Position = UDim2.fromOffset(175, 50) end
-    if typeof(Config.Size) ~= 'UDim2' then
-        if Library.IsMobile then
-            local ViewportSizeYOffset = tonumber(workspace.CurrentCamera.ViewportSize.Y) - 35;
-
-            Config.Size = UDim2.fromOffset(550, math.clamp(ViewportSizeYOffset, 200, 600))
-        else
-            Config.Size = UDim2.fromOffset(550, 600)
-        end
+    local ViewportSize: Vector2 = workspace.CurrentCamera.ViewportSize
+    if RunService:IsStudio() and ViewportSize.X <= 5 and ViewportSize.Y <= 5 then
+        repeat
+            ViewportSize = workspace.CurrentCamera.ViewportSize
+            task.wait()
+        until ViewportSize.X > 5 and ViewportSize.Y > 5
     end
 
-    if typeof(Config.UnlockMouseWhileOpen) ~= "boolean" then
-        Config.UnlockMouseWhileOpen = true
+    if WindowInfo.Size == UDim2.fromOffset(0, 0) then
+        WindowInfo.Size = if Library.IsMobile then UDim2.fromOffset(550, math.clamp(ViewportSize.Y - 35, 200, 600)) else UDim2.fromOffset(550, 600)
     end
 
-    if Config.TabPadding <= 0 then
-        Config.TabPadding = 1
-    end
+    Library.NotifySide = WindowInfo.NotifySide
+    Library.ShowCustomCursor = WindowInfo.ShowCustomCursor
 
-    if Config.Center then
-        -- Config.AnchorPoint = Vector2.new(0.5, 0.5)
-        Config.Position = UDim2.new(0.5, -Config.Size.X.Offset/2, 0.5, -Config.Size.Y.Offset/2)
-    end
+    if WindowInfo.TabPadding <= 0 then WindowInfo.TabPadding = 1 end
+    if WindowInfo.Center then WindowInfo.Position = UDim2.new(0.5, -WindowInfo.Size.X.Offset / 2, 0.5, -WindowInfo.Size.Y.Offset / 2) end
 
     local Window = {
         Tabs = {};
 
-        OriginalTitle = Config.Title; Title = Config.Title;
+        OriginalTitle = WindowInfo.Title; 
+        Title = WindowInfo.Title;
     };
 
     local Outer = Library:Create('Frame', {
-        AnchorPoint = Config.AnchorPoint;
+        AnchorPoint = WindowInfo.AnchorPoint;
         BackgroundColor3 = Color3.new(0, 0, 0);
         BorderSizePixel = 0;
-        Position = Config.Position;
-        Size = Config.Size;
+        Position = WindowInfo.Position;
+        Size = WindowInfo.Size;
         Visible = false;
         ZIndex = 1;
         Parent = ScreenGui;
@@ -5736,10 +5771,7 @@ function Library:CreateWindow(...)
     });
     LibraryMainOuterFrame = Outer;
     Library:MakeDraggable(Outer, 25, true);
-
-    if Config.Resizable then
-        Library:MakeResizable(Outer, Library.MinSize);
-    end
+    if WindowInfo.Resizable then Library:MakeResizable(Outer, Library.MinSize); end
 
     local Inner = Library:Create('Frame', {
         BackgroundColor3 = Library.MainColor;
@@ -5759,7 +5791,7 @@ function Library:CreateWindow(...)
     local WindowLabel = Library:CreateLabel({
         Position = UDim2.new(0, 7, 0, 0);
         Size = UDim2.new(0, 0, 0, 25);
-        Text = Config.Title or '';
+        Text = WindowInfo.Title or '';
         TextXAlignment = Enum.TextXAlignment.Left;
         ZIndex = 1;
         Parent = Inner;
@@ -5800,14 +5832,14 @@ function Library:CreateWindow(...)
         AutomaticCanvasSize = Enum.AutomaticSize.XY;
         ScrollBarThickness = 0;
         BackgroundTransparency = 1;
-        Position = UDim2.new(0, 8 - Config.TabPadding, 0, 4);
+        Position = UDim2.new(0, 8 - WindowInfo.TabPadding, 0, 4);
         Size = UDim2.new(1, -10, 0, 26);
         ZIndex = 1;
         Parent = MainSectionInner;
     });
 
     local TabListLayout = Library:Create('UIListLayout', {
-        Padding = UDim.new(0, Config.TabPadding);
+        Padding = UDim.new(0, WindowInfo.TabPadding);
         FillDirection = Enum.FillDirection.Horizontal;
         SortOrder = Enum.SortOrder.LayoutOrder;
         VerticalAlignment = Enum.VerticalAlignment.Center;
@@ -6544,12 +6576,12 @@ function Library:CreateWindow(...)
         if typeof(Toggling) == "boolean" and Toggling == Toggled then return end;
         if Fading then return end;
 
-        local FadeTime = Config.MenuFadeTime;
+        local FadeTime = WindowInfo.MenuFadeTime;
         Fading = true;
         Toggled = (not Toggled);
 
         Library.Toggled = Toggled;
-        if Config.UnlockMouseWhileOpen then
+        if WindowInfo.UnlockMouseWhileOpen then
             ModalElement.Modal = Library.Toggled;
         end
 
@@ -6802,7 +6834,7 @@ function Library:CreateWindow(...)
         end)
     end;
 
-    if Config.AutoShow then task.spawn(Library.Toggle) end
+    if WindowInfo.AutoShow then task.spawn(Library.Toggle) end
 
     Window.Holder = Outer;
     Library.Window = Window;

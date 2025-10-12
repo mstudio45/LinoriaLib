@@ -1,3 +1,10 @@
+## 12.10.2025
+```diff
++ Added Lucide Icons Icon Module (you can now use Lucide Icons instead of asset ids)
++ Fixed Library:GetIcon being nil
++ Added Video, UI Passthrough components (check Obsidian documentation)
+```
+
 ## 5.10.2025
 ```diff
 + Added support for modifier keys in KeyPicker (for example: LCtrl + E)

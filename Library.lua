@@ -1989,6 +1989,14 @@ do
             end);
         end
 
+        function KeyPicker:Display(Text)
+            DisplayLabel.Text = Text or KeyPicker.DisplayValue;
+
+            PickOuter.Size = UDim2.new(0, 999999, 0, 18);
+            RunService.RenderStepped:Wait();
+            PickOuter.Size = UDim2.new(0, math.max(28, DisplayLabel.TextBounds.X + 8), 0, 18);
+        end
+
         function KeyPicker:Update()
             if Info.NoUI then
                 return;
@@ -2083,10 +2091,7 @@ do
                 ModeButtons[Mode]:Select(); 
             end;
 
-            PickOuter.Size = UDim2.new(0, 999999, 0, 18);
-            RunService.RenderStepped:Wait();
-            PickOuter.Size = UDim2.new(0, math.max(28, DisplayLabel.TextBounds.X + 8), 0, 18);
-
+            KeyPicker:Display();
             KeyPicker:Update();
 
             if SkipCallback == true then return end
@@ -2141,53 +2146,99 @@ do
             if PickerInput.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
                 Picking = true;
 
-                DisplayLabel.Text = '';
-
-                local Break;
-                local Text = '';
-
-                task.spawn(function()
-                    while (not Break) do
-                        if Text == '...' then
-                            Text = '';
-                        end;
-
-                        Text = Text .. '.';
-                        DisplayLabel.Text = Text;
-
-                        task.wait(0.4);
-                    end;
-                end);
-
-                task.wait();
+                KeyPicker:Display("...");
 
                 -- Wait for an non modifier key --
                 local Input
-                repeat
+                local ActiveModifiers = {}
+
+                local GetInput = function()
                     Input = InputService.InputBegan:Wait()
                     if InputService:GetFocusedTextBox() then
+                        return true
+                    end
+                end
+
+                repeat
+                    task.wait()
+
+                    -- Wait for any input --
+                    KeyPicker:Display("...");
+
+                    if GetInput() then
                         Picking = false
                         KeyPicker:Update()
                         return
                     end
-                until not IsModifierInput(Input)
+
+                    -- Escape --
+                    if Input.KeyCode == Enum.KeyCode.Escape then
+                        break
+                    end
+
+                    -- Handle modifier keys --
+                    if IsModifierInput(Input) then
+                        local StopLoop = false
+
+                        repeat
+                            task.wait()
+                            if InputService:IsKeyDown(Input.KeyCode) then
+                                task.wait(0.075)
+
+                                if InputService:IsKeyDown(Input.KeyCode) then
+                                    -- Add modifier to the key list --
+                                    if not table.find(ActiveModifiers, ModifiersInput[Input.KeyCode]) then
+                                        ActiveModifiers[#ActiveModifiers + 1] = ModifiersInput[Input.KeyCode]
+                                        KeyPicker:Display(table.concat(ActiveModifiers, " + ") .. " + ...");
+                                    end
+
+                                    -- Wait for another input --
+                                    if GetInput() then
+                                        StopLoop = true
+                                        break -- Invalid Input
+                                    end
+
+                                    -- Escape --
+                                    if Input.KeyCode == Enum.KeyCode.Escape then
+                                        break
+                                    end
+
+                                    -- Stop loop if its a normal key --
+                                    if not IsModifierInput(Input) then
+                                        break
+                                    end
+                                else
+                                    if not table.find(ActiveModifiers, ModifiersInput[Input.KeyCode]) then
+                                        break -- Modifier is meant to be used as a normal key --
+                                    end
+                                end
+                            end
+                        until false
+
+                        if StopLoop then
+                            Picking = false
+                            KeyPicker:Update()
+                            return
+                        end
+                    end
+
+                    break -- Input found, end loop
+                until false
 
                 local Key = "Unknown"
-                local ActiveModifiers = 
-                    if Input.KeyCode == Enum.KeyCode.Escape then {} else GetActiveModifiers();
-
                 if SpecialKeysInput[Input.UserInputType] ~= nil then
                     Key = SpecialKeysInput[Input.UserInputType];
                 elseif Input.UserInputType == Enum.UserInputType.Keyboard then
                     Key = Input.KeyCode == Enum.KeyCode.Escape and "None" or Input.KeyCode.Name;
                 end
 
+                ActiveModifiers = if Input.KeyCode == Enum.KeyCode.Escape or Key == "Unknown" then {} else ActiveModifiers;
+
                 KeyPicker.Toggled = false;
                 KeyPicker:SetValue({ Key, KeyPicker.Mode, ActiveModifiers })
 
                 -- RunService.RenderStepped:Wait()
                 repeat task.wait() until not IsInputDown(Input) or InputService:GetFocusedTextBox()
-                Break = true;
                 Picking = false;
 
             elseif PickerInput.UserInputType == Enum.UserInputType.MouseButton2 and not Library:MouseIsOverOpenedFrame() then

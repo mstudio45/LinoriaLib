@@ -962,7 +962,9 @@ do
         assert(Info.Default, string.format('AddColorPicker (IDX: %s): Missing default value.', tostring(Idx)));
 
         local ColorPicker = {
+            Default = Info.Default;
             Value = Info.Default;
+
             Transparency = Info.Transparency or 0;
             Type = 'ColorPicker';
             Title = typeof(Info.Title) == "string" and Info.Title or 'Color picker',
@@ -1572,6 +1574,9 @@ do
         assert(Info.Default, string.format('AddKeyPicker (IDX: %s): Missing default value.', tostring(Idx)));
 
         local KeyPicker = {
+            Default = Info.Default;
+            DefaultModifiers = Info.DefaultModifiers;
+
             Value = nil; -- Key
             Modifiers = {}; -- Modifiers
             DisplayValue = nil; -- Picker Text
@@ -2336,9 +2341,13 @@ do
         Info.FormatDisplayValue = if typeof(Info.FormatDisplayValue) == "function" then Info.FormatDisplayValue else nil;
 
         local Dropdown = {
+            Default = nil;
+            DefaultValues = Info.Values;
+            
             Values = Info.Values;
             Value = Info.Multi and {};
             DisabledValues = Info.DisabledValues or {};
+
             Multi = Info.Multi;
             Type = 'Dropdown';
             SpecialType = Info.SpecialType; -- can be either 'Player' or 'Team'
@@ -2924,17 +2933,19 @@ do
         local Defaults = {}
 
         if typeof(Info.Default) == "string" then
-            local Idx = table.find(Dropdown.Values, Info.Default)
-            if Idx then
-                table.insert(Defaults, Idx)
+            local DefaultIdx = table.find(Dropdown.Values, Info.Default)
+            if DefaultIdx then
+                table.insert(Defaults, DefaultIdx)
             end
+
         elseif typeof(Info.Default) == 'table' then
             for _, Value in next, Info.Default do
-                local Idx = table.find(Dropdown.Values, Value)
-                if Idx then
-                    table.insert(Defaults, Idx)
+                local DefaultIdx = table.find(Dropdown.Values, Value)
+                if DefaultIdx then
+                    table.insert(Defaults, DefaultIdx)
                 end
             end
+
         elseif typeof(Info.Default) == 'number' and Dropdown.Values[Info.Default] ~= nil then
             table.insert(Defaults, Info.Default)
         end
@@ -2954,6 +2965,8 @@ do
             Dropdown:BuildDropdownList();
             Dropdown:Display();
         end
+
+        Dropdown.Default = Defaults;
 
         task.delay(0.1, Dropdown.UpdateColors, Dropdown)
 
@@ -3378,12 +3391,14 @@ do
         Info.ClearTextOnFocus = if typeof(Info.ClearTextOnFocus) == "boolean" then Info.ClearTextOnFocus else true;
 
         local Textbox = {
+            Default = Info.Default or '';
             Value = Info.Default or '';
+
             Numeric = Info.Numeric or false;
             Finished = Info.Finished or false;
             Visible = if typeof(Info.Visible) == "boolean" then Info.Visible else true;
             Disabled = if typeof(Info.Disabled) == "boolean" then Info.Disabled else false;
-        AllowEmpty = if typeof(Info.AllowEmpty) == "boolean" then Info.AllowEmpty else true;
+            AllowEmpty = if typeof(Info.AllowEmpty) == "boolean" then Info.AllowEmpty else true;
             EmptyReset = if typeof(Info.EmptyReset) == "string" then Info.EmptyReset else "---";
             Type = 'Input';
 
@@ -3620,7 +3635,9 @@ do
         assert(Info.Text, string.format('AddInput (IDX: %s): Missing `Text` string.', tostring(Idx)));
 
         local Toggle = {
+            Default = Info.Default or false;
             Value = Info.Default or false;
+
             Type = 'Toggle';
             Visible = if typeof(Info.Visible) == "boolean" then Info.Visible else true;
             Disabled = if typeof(Info.Disabled) == "boolean" then Info.Disabled else false;
@@ -3854,7 +3871,9 @@ do
         assert(Info.Rounding,   string.format('AddSlider (IDX: %s): Missing rounding value.', tostring(Idx)));
 
         local Slider = {
+            Default = Info.Default;
             Value = Info.Default;
+
             Min = Info.Min;
             Max = Info.Max;
             Rounding = Info.Rounding;
@@ -4223,9 +4242,13 @@ do
         end;
 
         local Dropdown = {
+            Default = nil;
+            DefaultValues = Info.Values;
+
             Values = Info.Values;
             Value = Info.Multi and {};
             DisabledValues = Info.DisabledValues or {};
+
             Multi = Info.Multi;
             Type = 'Dropdown';
             SpecialType = Info.SpecialType; -- can be either 'Player' or 'Team'
@@ -4817,15 +4840,15 @@ do
         local Defaults = {}
 
         if typeof(Info.Default) == "string" then
-            local Idx = table.find(Dropdown.Values, Info.Default)
-            if Idx then
-                table.insert(Defaults, Idx)
+            local DefaultIdx = table.find(Dropdown.Values, Info.Default)
+            if DefaultIdx then
+                table.insert(Defaults, DefaultIdx)
             end
         elseif typeof(Info.Default) == 'table' then
             for _, Value in next, Info.Default do
-                local Idx = table.find(Dropdown.Values, Value)
-                if Idx then
-                    table.insert(Defaults, Idx)
+                local DefaultIdx = table.find(Dropdown.Values, Value)
+                if DefaultIdx then
+                    table.insert(Defaults, DefaultIdx)
                 end
             end
         elseif typeof(Info.Default) == 'number' and Dropdown.Values[Info.Default] ~= nil then
@@ -4847,6 +4870,8 @@ do
             Dropdown:BuildDropdownList();
             Dropdown:Display();
         end
+
+        Dropdown.Default = Defaults;
 
         task.delay(0.1, Dropdown.UpdateColors, Dropdown)
         Blank = Groupbox:AddBlank(Info.BlankSize or 5, Dropdown.Visible);

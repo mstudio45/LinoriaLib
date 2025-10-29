@@ -3047,7 +3047,7 @@ do
         table.insert(Groupbox.Elements, {
             Holder = DividerOuter,
             Type = "Divider",
-        })
+        });
     end;
 
     function BaseGroupboxFuncs:AddLabel(...)
@@ -3123,6 +3123,8 @@ do
 
         Blank = Groupbox:AddBlank(5);
         Groupbox:Resize();
+
+        table.insert(Groupbox.Elements, Label);
         
         if Data.Idx then
             -- Options[Data.Idx] = Label;
@@ -3388,7 +3390,9 @@ do
         Blank = Groupbox:AddBlank(5, IsVisible);
         Groupbox:Resize();
 
+        table.insert(Groupbox.Elements, Button);
         table.insert(Buttons, Button);
+
         return Button;
     end;
 
@@ -3633,6 +3637,7 @@ do
 
         Textbox.Default = Textbox.Value;
 
+        table.insert(Groupbox.Elements, Textbox);
         Options[Idx] = Textbox;
 
         return Textbox;
@@ -3862,6 +3867,7 @@ do
 
         Toggle.Default = Toggle.Value;
 
+        table.insert(Groupbox.Elements, Toggle);
         Toggles[Idx] = Toggle;
 
         Library:UpdateDependencyBoxes();
@@ -4218,6 +4224,7 @@ do
 
         Slider.Default = Slider.Value;
 
+        table.insert(Groupbox.Elements, Slider);
         Options[Idx] = Slider;
 
         return Slider;
@@ -4883,6 +4890,7 @@ do
         Dropdown.Default = Defaults;
         Dropdown.DefaultValues = Dropdown.Values;
 
+        table.insert(Groupbox.Elements, Dropdown);
         Options[Idx] = Dropdown;
 
         return Dropdown;
@@ -5154,6 +5162,7 @@ do
         Viewport.Holder = Holder;
         Viewport.Container = Container;
 
+        table.insert(Groupbox.Elements, Viewport)
         Options[Idx] = Viewport
 
         Library:UpdateDependencyBoxes();
@@ -5310,7 +5319,8 @@ do
         Image.Holder = Holder
         Image.Container = Container;
 
-        Options[Idx] = Image
+        table.insert(Groupbox.Elements, Image);
+        Options[Idx] = Image;
 
         Library:UpdateDependencyBoxes();
         Library:UpdateDependencyGroupboxes();
@@ -5442,7 +5452,8 @@ do
         Video.Container = Container;
         Video.VideoFrame = VideoFrameInstance;
 
-        Options[Idx] = Video
+        table.insert(Groupbox.Elements, Video);
+        Options[Idx] = Video;
 
         Library:UpdateDependencyBoxes();
         Library:UpdateDependencyGroupboxes();
@@ -5523,6 +5534,7 @@ do
         Passthrough.Holder = Holder;
         Passthrough.Container = Container;
 
+        table.insert(Groupbox.Elements, Passthrough);
         Options[Idx] = Passthrough;
 
         Library:UpdateDependencyBoxes();
@@ -5533,7 +5545,9 @@ do
 
     function BaseGroupboxFuncs:AddDependencyBox()
         local Depbox = {
+            Elements = {};
             Dependencies = {};
+            TableType = "DepBox";
         };
 
         local Groupbox = self;
@@ -5603,6 +5617,7 @@ do
 
         setmetatable(Depbox, BaseGroupbox);
 
+        table.insert(Groupbox.Elements, Depbox);
         table.insert(Library.DependencyBoxes, Depbox);
 
         return Depbox;
@@ -5615,6 +5630,7 @@ do
         local DepGroupbox = {
             Elements = {};
             Dependencies = {};
+            TableType = "DepGroupbox";
         }
 
         local BoxOuter = Library:Create('Frame', {
@@ -6266,6 +6282,7 @@ function Library:CreateWindow(...)
             };
             OriginalName = Name; 
             Name = Name;
+            TableType = "Tab";
         };
 
         local TabButtonWidth = Library:GetTextBounds(Tab.Name, Library.Font, 16);
@@ -6603,6 +6620,7 @@ function Library:CreateWindow(...)
                 Elements = {};
                 Side = Info.Side;
                 Tab = Tab;
+                TableType = "Groupbox";
             };
 
             local BoxOuter = Library:Create('Frame', {
@@ -6762,7 +6780,9 @@ function Library:CreateWindow(...)
 
             function Tabbox:AddTab(Name)
                 local Tab = {
+                    Elements = {};
                     Container = nil;
+                    TableType = "TabboxTab";
                 };
 
                 local Button = Library:Create('Frame', {

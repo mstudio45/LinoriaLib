@@ -3010,6 +3010,46 @@ do
         });
     end;
 
+    function BaseGroupboxFuncs:AddDivider()
+        local Groupbox = self;
+        local Container = self.Container
+
+        Groupbox:AddBlank(2);
+        local DividerOuter = Library:Create('Frame', {
+            BackgroundColor3 = Color3.new(0, 0, 0);
+            BorderColor3 = Color3.new(0, 0, 0);
+            Size = UDim2.new(1, -4, 0, 5);
+            ZIndex = 5;
+            Parent = Container;
+        });
+
+        local DividerInner = Library:Create('Frame', {
+            BackgroundColor3 = Library.MainColor;
+            BorderColor3 = Library.OutlineColor;
+            BorderMode = Enum.BorderMode.Inset;
+            Size = UDim2.new(1, 0, 1, 0);
+            ZIndex = 6;
+            Parent = DividerOuter;
+        });
+
+        Library:AddToRegistry(DividerOuter, {
+            BorderColor3 = 'Black';
+        });
+
+        Library:AddToRegistry(DividerInner, {
+            BackgroundColor3 = 'MainColor';
+            BorderColor3 = 'OutlineColor';
+        });
+
+        Groupbox:AddBlank(9);
+        Groupbox:Resize();
+
+        table.insert(Groupbox.Elements, {
+            Holder = DividerOuter,
+            Type = "Divider",
+        })
+    end;
+
     function BaseGroupboxFuncs:AddLabel(...)
         local Data = {}
 
@@ -3351,45 +3391,6 @@ do
         table.insert(Buttons, Button);
         return Button;
     end;
-
-    function BaseGroupboxFuncs:AddDivider()
-        local Groupbox = self;
-        local Container = self.Container
-
-        local Divider = {
-            Type = 'Divider',
-        }
-
-        Groupbox:AddBlank(2);
-        local DividerOuter = Library:Create('Frame', {
-            BackgroundColor3 = Color3.new(0, 0, 0);
-            BorderColor3 = Color3.new(0, 0, 0);
-            Size = UDim2.new(1, -4, 0, 5);
-            ZIndex = 5;
-            Parent = Container;
-        });
-
-        local DividerInner = Library:Create('Frame', {
-            BackgroundColor3 = Library.MainColor;
-            BorderColor3 = Library.OutlineColor;
-            BorderMode = Enum.BorderMode.Inset;
-            Size = UDim2.new(1, 0, 1, 0);
-            ZIndex = 6;
-            Parent = DividerOuter;
-        });
-
-        Library:AddToRegistry(DividerOuter, {
-            BorderColor3 = 'Black';
-        });
-
-        Library:AddToRegistry(DividerInner, {
-            BackgroundColor3 = 'MainColor';
-            BorderColor3 = 'OutlineColor';
-        });
-
-        Groupbox:AddBlank(9);
-        Groupbox:Resize();
-    end
 
     function BaseGroupboxFuncs:AddInput(Idx, Info)
         assert(Info.Text, string.format('AddInput (IDX: %s): Missing `Text` string.', tostring(Idx)));
@@ -5612,6 +5613,7 @@ do
         local Tab = ParentGroupbox.Tab;
 
         local DepGroupbox = {
+            Elements = {};
             Dependencies = {};
         }
 
@@ -6598,6 +6600,7 @@ function Library:CreateWindow(...)
 
         function Tab:AddGroupbox(Info)
             local Groupbox = {
+                Elements = {};
                 Side = Info.Side;
                 Tab = Tab;
             };

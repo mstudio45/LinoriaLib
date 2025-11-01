@@ -1,58 +1,67 @@
-local cloneref = (cloneref or clonereference or function(instance: any) return instance end)
-local httpService = cloneref(game:GetService('HttpService'))
-local httprequest = (syn and syn.request) or request or http_request or (http and http.request)
-local getassetfunc = getcustomasset or getsynasset
+local cloneref = (cloneref or clonereference or function(instance: any)
+    return instance
+end)
+local clonefunction = (clonefunction or copyfunction or function(func) 
+    return func 
+end)
+
+local httprequest = request or http_request or (http and http.request)
+local getassetfunc = getcustomasset
+
+local HttpService: HttpService = cloneref(game:GetService("HttpService"))
 local isfolder, isfile, listfiles = isfolder, isfile, listfiles;
+
 local assert = function(condition, errorMessage) 
     if (not condition) then
         error(if errorMessage then errorMessage else "assert failed", 3)
     end
 end
 
-if typeof(copyfunction) == "function" then
+if typeof(clonefunction) == "function" then
     -- Fix is_____ functions for shitsploits, those functions should never error, only return a boolean.
 
     local
         isfolder_copy,
         isfile_copy,
-        listfiles_copy = copyfunction(isfolder), copyfunction(isfile), copyfunction(listfiles);
+        listfiles_copy = clonefunction(isfolder), clonefunction(isfile), clonefunction(listfiles)
 
     local isfolder_success, isfolder_error = pcall(function()
         return isfolder_copy("test" .. tostring(math.random(1000000, 9999999)))
-    end);
+    end)
 
     if isfolder_success == false or typeof(isfolder_error) ~= "boolean" then
         isfolder = function(folder)
             local success, data = pcall(isfolder_copy, folder)
             return (if success then data else false)
-        end;
+        end
 
         isfile = function(file)
             local success, data = pcall(isfile_copy, file)
             return (if success then data else false)
-        end;
+        end
 
         listfiles = function(folder)
             local success, data = pcall(listfiles_copy, folder)
             return (if success then data else {})
-        end;
+        end
     end
 end
 
 local ThemeManager = {} do
-	ThemeManager.Folder = 'LinoriaLibSettings'
+	local ThemeFields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
+	ThemeManager.Folder = "LinoriaLibSettings"
 	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
 
 	ThemeManager.Library = nil
 	ThemeManager.BuiltInThemes = {
-		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"0055ff","BackgroundColor":"141414","OutlineColor":"323232"}') },
-		['BBot'] 			= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1e1e","AccentColor":"7e48a3","BackgroundColor":"232323","OutlineColor":"141414"}') },
-		['Fatality']		= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1842","AccentColor":"c50754","BackgroundColor":"191335","OutlineColor":"3c355d"}') },
-		['Jester'] 			= { 4, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"db4467","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
-		['Mint'] 			= { 5, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"3db488","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
-		['Tokyo Night'] 	= { 6, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"191925","AccentColor":"6759b3","BackgroundColor":"16161f","OutlineColor":"323232"}') },
-		['Ubuntu'] 			= { 7, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"3e3e3e","AccentColor":"e2581e","BackgroundColor":"323232","OutlineColor":"191919"}') },
-		['Quartz'] 			= { 8, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"232330","AccentColor":"426e87","BackgroundColor":"1d1b26","OutlineColor":"27232f"}') },
+		['Default']       = { 1, { FontColor = "ffffff", MainColor = "1c1c1c", AccentColor = "0055ff", BackgroundColor = "141414", OutlineColor = "323232" } },
+		['BBot']          = { 2, { FontColor = "ffffff", MainColor = "1e1e1e", AccentColor = "7e48a3", BackgroundColor = "232323", OutlineColor = "141414" } },
+		['Fatality']      = { 3, { FontColor = "ffffff", MainColor = "1e1842", AccentColor = "c50754", BackgroundColor = "191335", OutlineColor = "3c355d" } },
+		['Jester']        = { 4, { FontColor = "ffffff", MainColor = "242424", AccentColor = "db4467", BackgroundColor = "1c1c1c", OutlineColor = "373737" } },
+		['Mint']          = { 5, { FontColor = "ffffff", MainColor = "242424", AccentColor = "3db488", BackgroundColor = "1c1c1c", OutlineColor = "373737" } },
+		['Tokyo Night']   = { 6, { FontColor = "ffffff", MainColor = "191925", AccentColor = "6759b3", BackgroundColor = "16161f", OutlineColor = "323232" } },
+		['Ubuntu']        = { 7, { FontColor = "ffffff", MainColor = "3e3e3e", AccentColor = "e2581e", BackgroundColor = "323232", OutlineColor = "191919" } },
+		['Quartz']        = { 8, { FontColor = "ffffff", MainColor = "232330", AccentColor = "426e87", BackgroundColor = "1d1b26", OutlineColor = "27232f" } },
 	}
 
 	function ApplyBackgroundVideo(videoLink)
@@ -172,8 +181,7 @@ local ThemeManager = {} do
 			self.Library.InnerVideoBackground.Visible = false
 		end
 
-		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
-		for i, field in next, options do
+		for i, field in next, ThemeFields do
 			if self.Library.Options and self.Library.Options[field] then
 				self.Library[field] = self.Library.Options[field].Value
 
@@ -195,7 +203,7 @@ local ThemeManager = {} do
 		end
 
 		local data = readfile(path)
-		local success, decoded = pcall(httpService.JSONDecode, httpService, data)
+		local success, decoded = pcall(HttpService.JSONDecode, HttpService, data)
 		
 		if not success then
 			return nil
@@ -233,13 +241,12 @@ local ThemeManager = {} do
 
 	function ThemeManager:SaveCustomTheme(file)
 		if file:gsub(' ', '') == '' then
-			return self.Library:Notify('Invalid file name for theme (empty)', 3)
+			self.Library:Notify('Invalid file name for theme (empty)', 3)
+			return
 		end
 
 		local theme = {}
-		local fields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
-
-		for _, field in next, fields do
+		for _, field in next, ThemeFields do
 			if field == "VideoLink" then
 				theme[field] = self.Library.Options[field].Value
 			else
@@ -247,7 +254,7 @@ local ThemeManager = {} do
 			end
 		end
 
-		writefile(self.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))
+		writefile(self.Folder .. '/themes/' .. file .. '.json', HttpService:JSONEncode(theme))
 	end
 
 	function ThemeManager:Delete(name)
@@ -323,8 +330,15 @@ local ThemeManager = {} do
 
 		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
 		groupbox:AddButton('Create theme', function() 
-			self:SaveCustomTheme(self.Library.Options.ThemeManager_CustomThemeName.Value)
+			local name = self.Library.Options.ThemeManager_CustomThemeName.Value
+			if name:gsub(" ", "") == "" then
+                self.Library:Notify("Invalid theme name (empty)", 2)
+                return
+            end
 
+            self:SaveCustomTheme(name)
+
+            self.Library:Notify(string.format("Created theme %q", name))
 			self.Library.Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
 			self.Library.Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end)
@@ -349,7 +363,8 @@ local ThemeManager = {} do
 
 			local success, err = self:Delete(name)
 			if not success then
-				return self.Library:Notify('Failed to delete theme: ' .. err)
+				self.Library:Notify('Failed to delete theme: ' .. err)
+				return
 			end
 
 			self.Library:Notify(string.format('Deleted theme %q', name))
@@ -369,7 +384,8 @@ local ThemeManager = {} do
 		groupbox:AddButton('Reset default', function()
 			local success = pcall(delfile, self.Folder .. '/themes/default.txt')
 			if not success then 
-				return self.Library:Notify('Failed to reset default: delete file error')
+				self.Library:Notify('Failed to reset default: delete file error')
+				return
 			end
 				
 			self.Library:Notify('Set default theme to nothing')

@@ -1,3 +1,8 @@
+## 01.11.2025
+```diff
++ The ignored indexes are no longer applied when you load a configuration that contains them
+```
+
 ## 12.10.2025
 ```diff
 + Added Lucide Icons Icon Module (you can now use Lucide Icons instead of asset ids)

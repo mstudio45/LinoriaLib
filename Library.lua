@@ -6055,7 +6055,7 @@ do
     end
 
     function Library:Notify(...)
-        local Data = { Steps = 1 }
+        local Data = {}
         local Info = select(1, ...)
 
         if typeof(Info) == "table" then
@@ -6063,13 +6063,26 @@ do
             Data.Description = tostring(Info.Description)
             Data.Time = Info.Time or 5
             Data.SoundId = Info.SoundId
+            Data.Steps = Info.Steps
+            Data.Persist = Info.Persist
         else
             Data.Title = ""
             Data.Description = tostring(Info)
             Data.Time = select(2, ...) or 5
             Data.SoundId = select(3, ...)
         end
-        
+        Data.Destroyed = false
+
+        local DeletedInstance = false
+        local DeleteConnection = nil
+        if typeof(Data.Time) == "Instance" then
+            DeleteConnection = Data.Time.Destroying:Connect(function()
+                DeletedInstance = true
+                DeleteConnection:Disconnect()
+                DeleteConnection = nil
+            end)
+        end
+
         local Side = string.lower(Library.NotifySide)
         local XSize, YSize = Library:GetTextBounds(Data.Description, Library.Font, 14)
         YSize = YSize + 7
@@ -6079,7 +6092,8 @@ do
             Size = UDim2.new(0, 0, 0, YSize);
             ClipsDescendants = true;
             ZIndex = 100;
-            Parent = if Side == "left" then Library.LeftNotificationArea else Library.RightNotificationArea;
+            Visible = false;
+            Parent = Side == "left" and Library.LeftNotificationArea or Library.RightNotificationArea;
         })
 
         local NotifyInner = Library:Create('Frame', {
@@ -6124,11 +6138,11 @@ do
         })
 
         local NotifyLabel = Library:CreateLabel({
-            AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
-            Position = if Side == "left" then UDim2.new(0, 4, 0, 0) else UDim2.new(1, -4, 0, 0);
+            AnchorPoint = Side == "left" and Vector2.new(0, 0) or Vector2.new(1, 0);
+            Position = Side == "left" and UDim2.new(0, 4, 0, 0) or UDim2.new(1, -4, 0, 0);
             Size = UDim2.new(1, -4, 1, 0);
-            Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description);
-            TextXAlignment = if Side == "left" then Enum.TextXAlignment.Left else Enum.TextXAlignment.Right;
+            Text = (Data.Title == "" and "" or "[" .. Data.Title .. "] ") .. tostring(Data.Description);
+            TextXAlignment = Side == "left" and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right;
             TextSize = 14;
             ZIndex = 103;
             RichText = true;
@@ -6136,8 +6150,8 @@ do
         })
 
         local SideColor = Library:Create('Frame', {
-            AnchorPoint = if Side == "left" then Vector2.new(0, 0) else Vector2.new(1, 0);
-            Position = if Side == "left" then UDim2.new(0, -1, 0, -1) else UDim2.new(1, -1, 0, -1);
+            AnchorPoint = Side == "left" and Vector2.new(0, 0) or Vector2.new(1, 0);
+            Position = Side == "left" and UDim2.new(0, -1, 0, -1) or UDim2.new(1, -1, 0, -1);
             BackgroundColor3 = Library.AccentColor;
             BorderSizePixel = 0;
             Size = UDim2.new(0, 3, 1, 2);
@@ -6145,41 +6159,52 @@ do
             Parent = NotifyOuter;
         })
 
+        Library:AddToRegistry(SideColor, {
+            BackgroundColor3 = 'AccentColor';
+        }, true)
+
         function Data:Resize()
             XSize, YSize = Library:GetTextBounds(NotifyLabel.Text, Library.Font, 14)
             YSize = YSize + 7
-        
+            
             pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true)
         end
 
         function Data:ChangeTitle(NewText)
-            NewText = if NewText == nil then "" else tostring(NewText)
-
+            NewText = NewText == nil and "" or tostring(NewText)
             Data.Title = NewText
-            NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description)
-
+            NotifyLabel.Text = (Data.Title == "" and "" or "[" .. Data.Title .. "] ") .. tostring(Data.Description)
             Data:Resize()
         end
 
         function Data:ChangeDescription(NewText)
             if NewText == nil then return end
             NewText = tostring(NewText)
-
             Data.Description = NewText
-            NotifyLabel.Text = (if Data.Title == "" then "" else "[" .. Data.Title .. "] ") .. tostring(Data.Description)
-
+            NotifyLabel.Text = (Data.Title == "" and "" or "[" .. Data.Title .. "] ") .. tostring(Data.Description)
             Data:Resize()
         end
 
-        function Data:ChangeStep()
-            -- this is supposed to be empty
+        function Data:ChangeStep(...)
+        end
+
+        function Data:Destroy()
+            Data.Destroyed = true
+
+            if typeof(Data.Time) == "Instance" then
+                pcall(Data.Time.Destroy, Data.Time)
+            end
+            
+            if DeleteConnection then
+                DeleteConnection:Disconnect()
+            end
+
+            pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true)
+            task.wait(0.4)
+            NotifyOuter:Destroy()
         end
 
         Data:Resize()
-
-        Library:AddToRegistry(SideColor, {
-            BackgroundColor3 = 'AccentColor';
-        }, true)
 
         if Data.SoundId then
             Library:Create('Sound', {
@@ -6190,18 +6215,23 @@ do
             }):Destroy()
         end
 
+        NotifyOuter.Visible = true
         pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize * DPIScale + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true)
 
-        task.spawn(function()
-            if typeof(Data.Time) == "Instance" then
-                Data.Time.Destroying:Wait()
+        task.delay(0.4, function()
+            if Data.Persist then
+                return
+            elseif typeof(Data.Time) == "Instance" then
+                repeat
+                    task.wait()
+                until DeletedInstance or Data.Destroyed
             else
                 task.wait(Data.Time or 5)
             end
 
-            pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true)
-            task.wait(0.4)
-            NotifyOuter:Destroy()
+            if not Data.Destroyed then
+                Data:Destroy()
+            end
         end)
 
         return Data

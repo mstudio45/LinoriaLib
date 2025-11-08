@@ -5302,6 +5302,7 @@ end
             Height = if typeof(Info.Height) == "number" and Info.Height > 0 then Info.Height else 200,
             ScaleType = Info.ScaleType,
             Transparency = Info.Transparency,
+            BackgroundTransparency = tonumber(Info.BackgroundTransparency) or 0,
 
             Visible = Info.Visible,
             Type = "Image",
@@ -5322,6 +5323,7 @@ end
             BackgroundColor3 = Library.MainColor,
             BorderColor3 = Library.OutlineColor,
             BorderSizePixel = 1,
+            BackgroundTransparency = Image.BackgroundTransparency,
             BorderMode = Enum.BorderMode.Inset,
             Size = UDim2.fromScale(1, 1),
             ZIndex = 6,

@@ -195,7 +195,7 @@ do
 
     function CustomImageManager.DownloadAsset(AssetName: string, ForceRedownload: boolean?)
         if not getcustomasset or not writefile or not isfile then
-            return
+            return false, "missing functions"
         end
 
         local AssetData = CustomImageManagerAssets[AssetName]
@@ -203,10 +203,14 @@ do
         RecursiveCreatePath(AssetData.Path, true)
 
         if ForceRedownload ~= true and isfile(AssetData.Path) then
-            return
+            return true, nil
         end
 
-        writefile(AssetData.Path, game:HttpGet(AssetData.URL))
+        local success, errorMessage = pcall(function()
+            writefile(AssetData.Path, game:HttpGet(AssetData.URL))
+        end)
+
+        return success, errorMessage
     end
 
     for AssetName, _ in CustomImageManagerAssets do

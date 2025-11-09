@@ -83,6 +83,137 @@ local Options = {}
 local Labels = {}
 local Buttons = {}
 
+-- https://github.com/deividcomsono/Obsidian/blob/main/Library.lua#L30
+local BaseURL = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/refs/heads/main/"
+local CustomImageManager = {}
+local CustomImageManagerAssets = {
+    Cursor = {
+        RobloxId = 9619665977,
+        Path = "LinoriaLib/assets/Cursor.png",
+        URL = BaseURL .. "assets/Cursor.png",
+
+        Id = nil,
+    },
+
+    DropdownArrow = {
+        RobloxId = 6282522798,
+        Path = "LinoriaLib/assets/DropdownArrow.png",
+        URL = BaseURL .. "assets/DropdownArrow.png",
+
+        Id = nil,
+    },
+
+    Checker = {
+        RobloxId = 12977615774,
+        Path = "LinoriaLib/assets/Checker.png",
+        URL = BaseURL .. "assets/Checker.png",
+
+        Id = nil,
+    },
+
+    CheckerLong = {
+        RobloxId = 12978095818,
+        Path = "LinoriaLib/assets/CheckerLong.png",
+        URL = BaseURL .. "assets/CheckerLong.png",
+
+        Id = nil,
+    },
+
+    SaturationMap = {
+        RobloxId = 4155801252,
+        Path = "LinoriaLib/assets/SaturationMap.png",
+        URL = BaseURL .. "assets/SaturationMap.png",
+
+        Id = nil,
+    }
+}
+do
+    local function RecursiveCreatePath(Path: string, IsFile: boolean?)
+        if not isfolder or not makefolder then
+            return
+        end
+
+        local Segments = Path:split("/")
+        local TraversedPath = ""
+
+        if IsFile then
+            table.remove(Segments, #Segments)
+        end
+
+        for _, Segment in ipairs(Segments) do
+            if not isfolder(TraversedPath .. Segment) then
+                makefolder(TraversedPath .. Segment)
+            end
+
+            TraversedPath = TraversedPath .. Segment .. "/"
+        end
+
+        return TraversedPath
+    end
+
+    function CustomImageManager.AddAsset(AssetName: string, RobloxAssetId: number, URL: string, ForceRedownload: boolean?)
+        if CustomImageManagerAssets[AssetName] ~= nil then
+            error(string.format("Asset %q already exists", AssetName))
+        end
+
+        assert(typeof(RobloxAssetId) == "number", "RobloxAssetId must be a number")
+
+        CustomImageManagerAssets[AssetName] = {
+            RobloxId = RobloxAssetId,
+            Path = string.format("Obsidian/custom_assets/%s", AssetName),
+            URL = URL,
+
+            Id = nil,
+        }
+
+        CustomImageManager.DownloadAsset(AssetName, ForceRedownload)
+    end
+
+    function CustomImageManager.GetAsset(AssetName: string)
+        if not CustomImageManagerAssets[AssetName] then
+            return nil
+        end
+
+        local AssetData = CustomImageManagerAssets[AssetName]
+        if AssetData.Id then
+            return AssetData.Id
+        end
+
+        local AssetID = string.format("rbxassetid://%s", AssetData.RobloxId)
+
+        if getcustomasset then
+            local Success, NewID = pcall(getcustomasset, AssetData.Path)
+
+            if Success and NewID then
+                AssetID = NewID
+            end
+        end
+
+        AssetData.Id = AssetID
+        return AssetID
+    end
+
+    function CustomImageManager.DownloadAsset(AssetName: string, ForceRedownload: boolean?)
+        if not getcustomasset or not writefile or not isfile then
+            return
+        end
+
+        local AssetData = CustomImageManagerAssets[AssetName]
+
+        RecursiveCreatePath(AssetData.Path, true)
+
+        if ForceRedownload ~= true and isfile(AssetData.Path) then
+            return
+        end
+
+        writefile(AssetData.Path, game:HttpGet(AssetData.URL))
+    end
+
+    for AssetName, _ in CustomImageManagerAssets do
+        CustomImageManager.DownloadAsset(AssetName)
+    end
+end
+
 local Library = {
     Registry = {};
     RegistryMap = {};
@@ -152,116 +283,9 @@ local Library = {
     Options = Options;
     Labels = Labels;
     Buttons = Buttons;
+
+    ImageManager = CustomImageManager;
 }
-
--- https://github.com/deividcomsono/Obsidian/blob/main/Library.lua#L97
-local ImageManager = {
-    Assets = {
-        Cursor = {
-            RobloxId = 9619665977,
-            Path = "LinoriaLib/assets/Cursor.png",
-
-            Id = nil,
-        },
-
-        DropdownArrow = {
-            RobloxId = 6282522798,
-            Path = "LinoriaLib/assets/DropdownArrow.png",
-
-            Id = nil,
-        },
-
-        Checker = {
-            RobloxId = 12977615774,
-            Path = "LinoriaLib/assets/Checker.png",
-
-            Id = nil,
-        },
-
-        CheckerLong = {
-            RobloxId = 12978095818,
-            Path = "LinoriaLib/assets/CheckerLong.png",
-
-            Id = nil,
-        },
-
-        SaturationMap = {
-            RobloxId = 4155801252,
-            Path = "LinoriaLib/assets/SaturationMap.png",
-
-            Id = nil,
-        },
-    },
-}
-do
-    local BaseURL = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/refs/heads/main/"
-
-    local function RecursiveCreatePath(Path: string, IsFile: boolean?)
-        if not isfolder or not makefolder then
-            return
-        end
-
-        local Segments = Path:split("/")
-        local TraversedPath = ""
-
-        if IsFile then
-            table.remove(Segments, #Segments)
-        end
-
-        for _, Segment in ipairs(Segments) do
-            if not isfolder(TraversedPath .. Segment) then
-                makefolder(TraversedPath .. Segment)
-            end
-
-            TraversedPath = TraversedPath .. Segment .. "/"
-        end
-
-        return TraversedPath
-    end
-
-    function ImageManager.GetAsset(AssetName: string)
-        if not ImageManager.Assets[AssetName] then
-            return nil
-        end
-
-        local AssetData = ImageManager.Assets[AssetName]
-        if AssetData.Id then
-            return AssetData.Id
-        end
-
-        local AssetID = string.format("rbxassetid://%s", AssetData.RobloxId)
-
-        if getcustomasset then
-            local Success, NewID = pcall(getcustomasset, AssetData.Path)
-
-            if Success and NewID then
-                AssetID = NewID
-            end
-        end
-
-        AssetData.Id = AssetID
-        return AssetID
-    end
-
-    function ImageManager.DownloadAsset(AssetPath: string)
-        if not getcustomasset or not writefile or not isfile then
-            return
-        end
-
-        RecursiveCreatePath(AssetPath, true)
-
-        if isfile(AssetPath) then
-            return
-        end
-
-        local URLPath = AssetPath:gsub("LinoriaLib/", "")
-        writefile(AssetPath, game:HttpGet(BaseURL .. URLPath))
-    end
-
-    for _, Data in ImageManager.Assets do
-        ImageManager.DownloadAsset(Data.Path)
-    end
-end
 
 if RunService:IsStudio() then
    Library.IsMobile = InputService.TouchEnabled and not InputService.MouseEnabled 
@@ -1867,7 +1891,7 @@ do
             BorderSizePixel = 0;
             Size = UDim2.new(0, 27, 0, 13);
             ZIndex = 5;
-            Image = ImageManager.GetAsset("Checker");
+            Image = CustomImageManager.GetAsset("Checker");
             Visible = not not Info.Transparency;
             Parent = DisplayFrame;
         })
@@ -1930,7 +1954,7 @@ do
             BorderSizePixel = 0;
             Size = UDim2.new(1, 0, 1, 0);
             ZIndex = 18;
-            Image = ImageManager.GetAsset("SaturationMap");
+            Image = CustomImageManager.GetAsset("SaturationMap");
             Parent = SatVibMapInner;
         })
 
@@ -1938,7 +1962,7 @@ do
             AnchorPoint = Vector2.new(0.5, 0.5);
             Size = UDim2.new(0, 6, 0, 6);
             BackgroundTransparency = 1;
-            Image = ImageManager.GetAsset("Cursor");
+            Image = CustomImageManager.GetAsset("Cursor");
             ImageColor3 = Color3.new(0, 0, 0);
             ZIndex = 19;
             Parent = SatVibMap;
@@ -1948,7 +1972,7 @@ do
             Size = UDim2.new(0, CursorOuter.Size.X.Offset - 2, 0, CursorOuter.Size.Y.Offset - 2);
             Position = UDim2.new(0, 1, 0, 1);
             BackgroundTransparency = 1;
-            Image = ImageManager.GetAsset("Cursor");
+            Image = CustomImageManager.GetAsset("Cursor");
             ZIndex = 20;
             Parent = CursorOuter;
         })
@@ -2059,7 +2083,7 @@ do
             Library:Create('ImageLabel', {
                 BackgroundTransparency = 1;
                 Size = UDim2.new(1, 0, 1, 0);
-                Image = ImageManager.GetAsset("CheckerLong");
+                Image = CustomImageManager.GetAsset("CheckerLong");
                 ZIndex = 20;
                 Parent = TransparencyBoxInner;
             })
@@ -2572,7 +2596,7 @@ do
             BackgroundTransparency = 1;
             Position = UDim2.new(1, -16, 0.5, 0);
             Size = UDim2.new(0, 12, 0, 12);
-            Image = ImageManager.GetAsset("DropdownArrow");
+            Image = CustomImageManager.GetAsset("DropdownArrow");
             ZIndex = 8;
             Parent = DropdownInner;
         })
@@ -4499,7 +4523,7 @@ end
             BackgroundTransparency = 1;
             Position = UDim2.new(1, -16, 0.5, 0);
             Size = UDim2.new(0, 12, 0, 12);
-            Image = ImageManager.GetAsset("DropdownArrow");
+            Image = CustomImageManager.GetAsset("DropdownArrow");
             ZIndex = 8;
             Parent = DropdownInner;
         })
@@ -4826,8 +4850,7 @@ end
 
             DropdownOuter.Visible = Dropdown.Visible
             if DropdownLabel then DropdownLabel.Visible = Dropdown.Visible end
-            if not Dropdown.Visible then Dropdown:CloseDropdown()
-end
+            if not Dropdown.Visible then Dropdown:CloseDropdown() end
 
             Groupbox:Resize()
         end

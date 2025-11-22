@@ -82,6 +82,7 @@ local Toggles = {}
 local Options = {}
 local Labels = {}
 local Buttons = {}
+local Tooltips = {}
 
 -- https://github.com/deividcomsono/Obsidian/blob/main/Library.lua#L30
 local BaseURL = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/refs/heads/main/"
@@ -218,6 +219,7 @@ do
     end
 end
 
+local DPIScale = 1;
 local Library = {
     Registry = {};
     RegistryMap = {};
@@ -299,28 +301,6 @@ else
 end
 
 Library.MinSize = if Library.IsMobile then Vector2.new(550, 200) else Vector2.new(550, 300)
-
---// Rainbow Handler \\--
-local RainbowStep = 0
-local Hue = 0
-local DPIScale = 1
-
-table.insert(Library.Signals, RunService.RenderStepped:Connect(function(Delta)
-    RainbowStep = RainbowStep + Delta
-
-    if RainbowStep >= (1 / 60) then
-        RainbowStep = 0
-
-        Hue = Hue + (1 / 400)
-
-        if Hue > 1 then
-            Hue = 0
-        end
-
-        Library.CurrentRainbowHue = Hue
-        Library.CurrentRainbowColor = Color3.fromHSV(Hue, 0.8, 1)
-    end
-end))
 
 --// Functions \\--
 local function ApplyDPIScale(Position)
@@ -811,9 +791,19 @@ function Library:AddToolTip(InfoStr, DisabledInfoStr, HoverInstance)
         Tooltip.Size = UDim2.fromOffset(X + 5, Y + 4)
         Label.Size = UDim2.fromOffset(X, Y)
     end
+
+    local function GiveSignal(Connection: RBXScriptConnection | RBXScriptSignal)
+        local ConnectionType = typeof(Connection)
+        if Connection and (ConnectionType == "RBXScriptConnection" or ConnectionType == "RBXScriptSignal") then
+            table.insert(TooltipTable.Signals, Connection)
+        end
+
+        return Connection
+    end
+
     UpdateText(InfoStr)
 
-    table.insert(TooltipTable.Signals, HoverInstance.MouseEnter:Connect(function()
+    GiveSignal(HoverInstance.MouseEnter:Connect(function()
         if Library:MouseIsOverOpenedFrame() then
             Tooltip.Visible = false
             return
@@ -825,16 +815,18 @@ function Library:AddToolTip(InfoStr, DisabledInfoStr, HoverInstance)
                 return
             end
 
-            if Label.Text ~= InfoStr then UpdateText(InfoStr)
-end
+            if Label.Text ~= InfoStr then
+                UpdateText(InfoStr)
+            end
         else
             if DisabledInfoStr == nil or DisabledInfoStr == "" then
                 Tooltip.Visible = false
                 return
             end
 
-            if Label.Text ~= DisabledInfoStr then UpdateText(DisabledInfoStr)
-end
+            if Label.Text ~= DisabledInfoStr then 
+                UpdateText(DisabledInfoStr)
+            end
         end
 
         IsHovering = true
@@ -853,13 +845,13 @@ end
         Tooltip.Visible = false
     end))
 
-    table.insert(TooltipTable.Signals, HoverInstance.MouseLeave:Connect(function()
+    GiveSignal(HoverInstance.MouseLeave:Connect(function()
         IsHovering = false
         Tooltip.Visible = false
     end))
     
     if LibraryMainOuterFrame then
-        table.insert(TooltipTable.Signals, LibraryMainOuterFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+        GiveSignal(LibraryMainOuterFrame:GetPropertyChangedSignal("Visible"):Connect(function()
             if LibraryMainOuterFrame.Visible == false then
                 IsHovering = false
                 Tooltip.Visible = false
@@ -868,14 +860,17 @@ end
     end
 
     function TooltipTable:Destroy()
-        Tooltip:Destroy()
-
         for Idx = #TooltipTable.Signals, 1, -1 do
             local Connection = table.remove(TooltipTable.Signals, Idx)
-            Connection:Disconnect()
+            if Connection and Connection.Connected then
+                Connection:Disconnect()
+            end
         end
+
+        Tooltip:Destroy()
     end
 
+    table.insert(Tooltips, TooltipTable)
     return TooltipTable
 end
 
@@ -891,9 +886,13 @@ function Library:OnHighlight(HighlightInstance, Instance, Properties, Properties
             end
         end
     end
+
     local function doHighlight()
-        if condition and not condition() then undoHighlight()
-return end
+        if condition and not condition() then 
+            undoHighlight()
+            return 
+        end
+
         local Reg = Library.RegistryMap[Instance]
 
         for Property, ColorIdx in next, Properties do
@@ -1031,25 +1030,34 @@ function Library:UpdateColorsUsingRegistry()
     end
 end
 
-function Library:GiveSignal(Signal)
-    -- Only used for signals not attached to library instances, as those should be cleaned up on object destruction by Roblox
-    table.insert(Library.Signals, Signal)
+function Library:GiveSignal(Connection: RBXScriptConnection | RBXScriptSignal) -- Only used for signals not attached to library instances, as those should be cleaned up on object destruction by Roblox
+    local ConnectionType = typeof(Connection)
+    if Connection and (ConnectionType == "RBXScriptConnection" or ConnectionType == "RBXScriptSignal") then
+        table.insert(Library.Signals, Connection)
+    end
+
+    return Connection
 end
 
 function Library:Unload()
-    -- Unload all of the signals
     for Idx = #Library.Signals, 1, -1 do
         local Connection = table.remove(Library.Signals, Idx)
-        Connection:Disconnect()
+        if Connection and Connection.Connected then
+            Connection:Disconnect()
+        end
     end
 
-    -- Call our unload callback, maybe to undo some hooks etc
-    for _, UnloadCallback in pairs(Library.UnloadSignals) do
+    for _, UnloadCallback in Library.UnloadSignals do
         Library:SafeCallback(UnloadCallback)
+    end
+
+    for _, Tooltip in Tooltips do
+        Library:SafeCallback(Tooltip.Destroy, Tooltip)
     end
 
     ScreenGui:Destroy()
     Library.Unloaded = true
+
     getgenv().Linoria = nil
 end
 
@@ -1058,6 +1066,10 @@ function Library:OnUnload(Callback)
 end
 
 Library:GiveSignal(ScreenGui.DescendantRemoving:Connect(function(Instance)
+    if Library.Unloaded then
+        return
+    end
+
     if Library.RegistryMap[Instance] then
         Library:RemoveFromRegistry(Instance)
     end
@@ -1387,7 +1399,12 @@ do
                 KeybindsToggleLabel.Position = if KeybindsToggle.Normal then UDim2.new(1, -13, 0, -1) else UDim2.new(1, 6, 0, -1)
             end
 
+            KeyPicker.DoClick = function(...) end --// make luau lsp shut up
             Library:GiveSignal(KeybindsToggleRegion.InputBegan:Connect(function(Input)
+                if Library.Unloaded then
+                    return
+                end
+
                 if KeybindsToggle.Normal then return end
                                         
                 if (Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame()) or Input.UserInputType == Enum.UserInputType.Touch then
@@ -1514,6 +1531,7 @@ do
                 Parent = UnbindInner;
             })
 
+            KeyPicker.SetValue = function(...) end --// make luau lsp shut up
             function UnbindButton:UnbindKey()
                 KeyPicker:SetValue({ nil, KeyPicker.Mode, {} })
                 ModeSelectOuter.Visible = false
@@ -1796,6 +1814,10 @@ do
         end)
 
         Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
+            if Library.Unloaded then
+                return
+            end
+
             if KeyPicker.Value == "Unknown" then return end
         
             if (not Picking) and (not InputService:GetFocusedTextBox()) then
@@ -1839,6 +1861,10 @@ do
         end))
 
         Library:GiveSignal(InputService.InputEnded:Connect(function(Input)
+            if Library.Unloaded then
+                return
+            end
+
             if (not Picking) then
                 KeyPicker:Update()
             end
@@ -1891,7 +1917,8 @@ do
         })
 
         -- Transparency image taken from https://github.com/matas3535/SplixPrivateDrawingLibrary/blob/main/Library.lua cus i'm lazy
-        local CheckerFrame = Library:Create('ImageLabel', {
+        -- local CheckerFrame = 
+        Library:Create('ImageLabel', {
             BorderSizePixel = 0;
             Size = UDim2.new(0, 27, 0, 13);
             ZIndex = 5;
@@ -1972,7 +1999,8 @@ do
             Parent = SatVibMap;
         })
 
-        local CursorInner = Library:Create('ImageLabel', {
+        -- local CursorInner = 
+        Library:Create('ImageLabel', {
             Size = UDim2.new(0, CursorOuter.Size.X.Offset - 2, 0, CursorOuter.Size.Y.Offset - 2);
             Position = UDim2.new(0, 1, 0, 1);
             BackgroundTransparency = 1;
@@ -2102,7 +2130,8 @@ do
             })
         end
 
-        local DisplayLabel = Library:CreateLabel({
+        -- local DisplayLabel = 
+        Library:CreateLabel({
             Size = UDim2.new(1, 0, 0, 14);
             Position = UDim2.fromOffset(5, 5);
             TextXAlignment = Enum.TextXAlignment.Left;
@@ -2228,9 +2257,11 @@ do
                 Library:Notify('Copied color!', 2)
             end)
 
+            ColorPicker.SetValueRGB = function(...) end --// make luau lsp shut up
             ContextMenu:AddOption('Paste color', function()
                 if not Library.ColorClipboard then
-                    return Library:Notify('You have not copied a color!', 2)
+                    Library:Notify('You have not copied a color!', 2)
+                    return
                 end
 
                 ColorPicker:SetValueRGB(Library.ColorClipboard)
@@ -2263,7 +2294,8 @@ do
             table.insert(SequenceTable, ColorSequenceKeypoint.new(Hue, Color3.fromHSV(Hue, 1, 1)))
         end
 
-        local HueSelectorGradient = Library:Create('UIGradient', {
+        -- local HueSelectorGradient =
+        Library:Create('UIGradient', {
             Color = ColorSequence.new(SequenceTable);
             Rotation = 90;
             Parent = HueSelectorInner;
@@ -2442,6 +2474,10 @@ do
         end
 
         Library:GiveSignal(InputService.InputBegan:Connect(function(Input)
+            if Library.Unloaded then
+                return
+            end
+
             if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
                 local AbsPos, AbsSize = PickerFrameOuter.AbsolutePosition, PickerFrameOuter.AbsoluteSize
 
@@ -3223,7 +3259,7 @@ do
             Type = "Label"
         }
 
-        local Blank = nil
+        -- local Blank = nil
         local Groupbox = self
         local Container = Groupbox.Container
 
@@ -3269,7 +3305,8 @@ do
             setmetatable(Label, BaseAddons)
         end
 
-        Blank = Groupbox:AddBlank(5)
+        -- Blank = 
+        Groupbox:AddBlank(5)
         Groupbox:Resize()
 
         table.insert(Groupbox.Elements, Label)
@@ -3619,7 +3656,7 @@ do
             Parent = TextBoxInner;
         })
 
-        local Container = Library:Create('Frame', {
+        local TextBoxContainer = Library:Create('Frame', {
             BackgroundTransparency = 1;
             ClipsDescendants = true;
 
@@ -3650,7 +3687,7 @@ do
             ClearTextOnFocus = not Textbox.Disabled and Info.ClearTextOnFocus;
 
             ZIndex = 7;
-            Parent = Container;
+            Parent = TextBoxContainer;
         })
 
         Library:ApplyTextStroke(Box)
@@ -3678,8 +3715,7 @@ do
         function Textbox:Display()
             TextBoxOuter.Visible = Textbox.Visible
             InputLabel.Visible = Textbox.Visible
-            if Blank then Blank.Visible = Textbox.Visible
-end
+            if Blank then Blank.Visible = Textbox.Visible end
 
             Groupbox:Resize()
         end
@@ -3746,7 +3782,7 @@ end
 
         local function Update()
             local PADDING = 2
-            local reveal = Container.AbsoluteSize.X
+            local reveal = TextBoxContainer.AbsoluteSize.X
 
             if not Box:IsFocused() or Box.TextBounds.X <= reveal - 2 * PADDING then
                 -- we aren't focused, or we fit so be normal
@@ -4854,6 +4890,10 @@ end
 
             DropdownOuter.Visible = Dropdown.Visible
             if DropdownLabel then DropdownLabel.Visible = Dropdown.Visible end
+
+            if Blank then Blank.Visible = Dropdown.Visible end
+            if CompactBlank then CompactBlank.Visible = Dropdown.Visible end
+
             if not Dropdown.Visible then Dropdown:CloseDropdown() end
 
             Groupbox:Resize()
@@ -5173,6 +5213,10 @@ end
         end)
 
         Library:GiveSignal(InputService.InputEnded:Connect(function(input)
+            if Library.Unloaded then
+                return
+            end
+
             if not Viewport.Interactive then
                 return
             end
@@ -5185,6 +5229,10 @@ end
         end))
 
         Library:GiveSignal(InputService.InputChanged:Connect(function(input)
+            if Library.Unloaded then
+                return
+            end
+
             if not Viewport.Interactive or not Dragging or Pinching then
                 return
             end
@@ -5223,6 +5271,10 @@ end
         end)
 
         Library:GiveSignal(InputService.TouchPinch:Connect(function(touchPositions, scale, velocity, state)
+            if Library.Unloaded then
+                return
+            end
+
             if not Viewport.Interactive or not Library:MouseIsOverFrame(ViewportFrame, touchPositions[1]) then
                 return
             end
@@ -6847,7 +6899,8 @@ end
                 BackgroundColor3 = 'AccentColor';
             })
 
-            local GroupboxLabel = Library:CreateLabel({
+            -- local GroupboxLabel = 
+            Library:CreateLabel({
                 Size = UDim2.new(1, 0, 0, 18);
                 Position = UDim2.new(0, 4, 0, 2);
                 TextSize = 14;
@@ -6981,7 +7034,8 @@ end
                     BackgroundColor3 = 'MainColor';
                 })
 
-                local ButtonLabel = Library:CreateLabel({
+                -- local ButtonLabel = 
+                Library:CreateLabel({
                     Size = UDim2.new(1, 0, 1, 0);
                     TextSize = 14;
                     Text = Name;
@@ -7191,8 +7245,10 @@ end
             task.spawn(function()
                 if Option.Type == 'Dropdown' then
                     Option:CloseDropdown()
+
                 elseif Option.Type == 'KeyPicker' then
                     Option:SetModePickerVisibility(false)
+
                 elseif Option.Type == 'ColorPicker' then
                     Option.ContextMenu:Hide()
                     Option:Hide()
@@ -7206,10 +7262,13 @@ end
             if Desc:IsA('ImageLabel') then
                 table.insert(Properties, 'ImageTransparency')
                 table.insert(Properties, 'BackgroundTransparency')
+
             elseif Desc:IsA('TextLabel') or Desc:IsA('TextBox') then
                 table.insert(Properties, 'TextTransparency')
+
             elseif Desc:IsA('Frame') or Desc:IsA('ScrollingFrame') then
                 table.insert(Properties, 'BackgroundTransparency')
+                
             elseif Desc:IsA('UIStroke') then
                 table.insert(Properties, 'Transparency')
             end
@@ -7239,7 +7298,11 @@ end
         Fading = false
     end
 
-    Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed)
+    Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed) -- :sob:
+        if Library.Unloaded then
+            return
+        end
+        
         if typeof(Library.ToggleKeybind) == 'table' and Library.ToggleKeybind.Type == 'KeyPicker' then
             if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode.Name == Library.ToggleKeybind.Value then
                 task.spawn(Library.Toggle)
@@ -7401,6 +7464,10 @@ end
 end
 
 local function OnPlayerChange()
+    if Library.Unloaded then
+        return
+    end
+
     local PlayerList, ExcludedPlayerList = GetPlayers(false, true), GetPlayers(true, true)
     local StringPlayerList, StringExcludedPlayerList = GetPlayers(false, false), GetPlayers(true, false)
 
@@ -7417,6 +7484,10 @@ local function OnPlayerChange()
 end
 
 local function OnTeamChange()
+    if Library.Unloaded then
+        return
+    end
+    
     local TeamList = GetTeams(false)
     local StringTeamList = GetTeams(true)
 
@@ -7433,6 +7504,31 @@ Library:GiveSignal(Players.PlayerRemoving:Connect(OnPlayerChange))
 Library:GiveSignal(Teams.ChildAdded:Connect(OnTeamChange))
 Library:GiveSignal(Teams.ChildRemoved:Connect(OnTeamChange))
 
+--// Rainbow Handler \\--
+local RainbowStep = 0
+local Hue = 0
+
+Library:GiveSignal(RunService.RenderStepped:Connect(function(Delta)
+    if Library.Unloaded then
+        return
+    end
+
+    RainbowStep = RainbowStep + Delta
+    if RainbowStep >= (1 / 60) then
+        RainbowStep = 0
+
+        Hue = Hue + (1 / 400)
+
+        if Hue > 1 then
+            Hue = 0
+        end
+
+        Library.CurrentRainbowHue = Hue
+        Library.CurrentRainbowColor = Color3.fromHSV(Hue, 0.8, 1)
+    end
+end))
+
+----
 getgenv().Linoria = Library
 if getgenv().skip_getgenv_linoria ~= true then getgenv().Library = Library end
 return Library

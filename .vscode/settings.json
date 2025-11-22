@@ -1,0 +1,5 @@
+{
+    "luau-lsp.types.definitionFiles": [
+        "./.vscode/globals.d.luau"
+    ]
+}

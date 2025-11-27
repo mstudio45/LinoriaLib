@@ -74,7 +74,7 @@ local SaveManager = {} do
         },
         Dropdown = {
             Save = function(idx, object)
-                return { type = 'Dropdown', idx = idx, value = object.Value, mutli = object.Multi }
+                return { type = 'Dropdown', idx = idx, value = object.Value, multi = object.Multi }
             end,
             Load = function(idx, data)
                 local object = SaveManager.Library.Options[idx]

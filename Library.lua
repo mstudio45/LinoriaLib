@@ -3327,7 +3327,7 @@ do
             Func = select(2, ...)
         }
         Button.OriginalText = Button.Text
-        
+        Button.Func = Button.Func or Button.Callback
         assert(typeof(Button.Func) == 'function', 'AddButton: `Func` callback is missing.')
 
         local Blank = nil
@@ -3466,7 +3466,8 @@ do
                 Text = select(1, ...),
                 Func = select(2, ...)
             }
-
+            SubButton.OriginalText = SubButton.Text
+            SubButton.Func = SubButton.Func or SubButton.Callback
             assert(typeof(SubButton.Func) == 'function', 'AddButton: `Func` callback is missing.')
 
             self.Outer.Size = UDim2.new(0.5, -2, 0, 20 * DPIScale)

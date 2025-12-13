@@ -1,3 +1,9 @@
+## 13.12.2025
+```diff
++ SyncToggleState KeyPickers can now use Hold Mode
++ Fixed Dropdown:SetValue({ "Value" }) calls
+```
+
 ## 01.11.2025
 ```diff
 + The ignored indexes are no longer applied when you load a configuration that contains them

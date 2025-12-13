@@ -1142,8 +1142,11 @@ do
         end
 
         if KeyPicker.SyncToggleState then
-            Info.Modes = { 'Toggle' }
-            Info.Mode = 'Toggle'
+            Info.Modes = { 'Toggle', 'Hold' }
+
+            if not table.find(Info.Modes, Info.Mode) then
+                Info.Mode = "Toggle"
+            end
         end
 
         local Picking = false
@@ -1560,6 +1563,10 @@ do
             local State = KeyPicker:GetState()
             local ShowToggle = Library.ShowToggleFrameInKeybinds and KeyPicker.Mode == 'Toggle'
 
+            if KeyPicker.SyncToggleState and ParentObj.Value ~= State then
+                ParentObj:SetValue(State)
+            end
+
             if KeybindsToggle.Loaded then
                 KeybindsToggle:SetNormal(not ShowToggle)
 
@@ -1675,10 +1682,6 @@ do
                 end
 
                 KeyPicker.Toggled = true
-            end
-
-            if ParentObj.Type == 'Toggle' and KeyPicker.SyncToggleState then
-                ParentObj:SetValue(not ParentObj.Value)
             end
 
             Library:SafeCallback(KeyPicker.Callback, KeyPicker.Toggled)
@@ -3048,22 +3051,24 @@ end
             -- Library:SafeCallback(Func, Dropdown.Value);
         end
 
-        function Dropdown:SetValue(Val)
+        function Dropdown:SetValue(Value)
             if Dropdown.Multi then
-                local nTable = {}
+                local Table = {}
 
-                for Value, Bool in next, Val do
-                    if table.find(Dropdown.Values, Value) then
-                        nTable[Value] = true
+                for Val, Active in pairs(Value or {}) do
+                    if typeof(Active) ~= "boolean" then
+                        Table[Active] = true
+                    elseif Active and table.find(Dropdown.Values, Val) then
+                        Table[Val] = true
                     end
                 end
 
-                Dropdown.Value = nTable
+                Dropdown.Value = Table
             else
-                if (not Val) then
+                if table.find(Dropdown.Values, Value) then
+                    Dropdown.Value = Value
+                elseif not Value then
                     Dropdown.Value = nil
-                elseif table.find(Dropdown.Values, Val) then
-                    Dropdown.Value = Val
                 end
             end
 
@@ -4963,22 +4968,24 @@ do
             -- Library:SafeCallback(Func, Dropdown.Value);
         end
 
-        function Dropdown:SetValue(Val)
+        function Dropdown:SetValue(Value)
             if Dropdown.Multi then
-                local nTable = {}
+                local Table = {}
 
-                for Value, Bool in next, Val do
-                    if table.find(Dropdown.Values, Value) then
-                        nTable[Value] = true
+                for Val, Active in pairs(Value or {}) do
+                    if typeof(Active) ~= "boolean" then
+                        Table[Active] = true
+                    elseif Active and table.find(Dropdown.Values, Val) then
+                        Table[Val] = true
                     end
                 end
 
-                Dropdown.Value = nTable
+                Dropdown.Value = Table
             else
-                if (not Val) then
+                if table.find(Dropdown.Values, Value) then
+                    Dropdown.Value = Value
+                elseif not Value then
                     Dropdown.Value = nil
-                elseif table.find(Dropdown.Values, Val) then
-                    Dropdown.Value = Val
                 end
             end
 

@@ -273,6 +273,8 @@ local Library = {
     CanDrag = true;
     CantDragForced = false;
 
+    Unloaded = false;
+
     -- notification --
     Notify = nil;
     NotifySide = "Left";
@@ -1055,8 +1057,8 @@ function Library:Unload()
         Library:SafeCallback(Tooltip.Destroy, Tooltip)
     end
 
-    ScreenGui:Destroy()
     Library.Unloaded = true
+    ScreenGui:Destroy()
 
     getgenv().Linoria = nil
 end

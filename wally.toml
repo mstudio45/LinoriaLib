@@ -1,0 +1,11 @@
+[package]
+name = "mstudio45/linorialibfork"
+version = "0.1.3"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+license = "MIT"
+description = "Maintained fork of LinoriaLib, a Roblox UI Library."
+
+exclude = ["README.md", "CHANGELOG.md", ".gitattributes", "rokit.toml", ".vscode/**", ".vscode**", ".vscode", "Example.lua"]
+
+[dependencies]

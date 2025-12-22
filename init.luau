@@ -1,2 +1,5 @@
-local Library = require("./linorialibfork/Library")
-return Library
+return {
+    Library = require("./linorialibfork/Library"),
+    SaveManager = require("./linorialibfork/addons/SaveManager"),
+    ThemeManager = require("./linorialibfork/addons/ThemeManager")
+}

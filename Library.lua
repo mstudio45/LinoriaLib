@@ -1900,7 +1900,28 @@ do
             Type = 'ColorPicker';
             Title = typeof(Info.Title) == "string" and Info.Title or 'Color picker',
             Callback = Info.Callback or function(Color) end;
+            Changed = nil,
         }
+
+        local PreviousValues = {
+            Value = nil,
+            Transparency = nil
+        }
+
+        local function RunCallback()
+            local NewValue = ColorPicker.Value
+            local NewTransparency = ColorPicker.Transparency
+
+            if NewValue == PreviousValues.Value and NewTransparency == PreviousValues.Transparency then
+                return
+            end
+
+            PreviousValues.Value = ColorPicker.Value
+            PreviousValues.Transparency = ColorPicker.Transparency
+
+            Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value, ColorPicker.Transparency)
+            Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value, ColorPicker.Transparency)
+        end
 
         function ColorPicker:SetHSVFromRGB(Color)
             local H, S, V = Color:ToHSV()
@@ -2330,7 +2351,6 @@ do
 
         function ColorPicker:OnChanged(Func)
             ColorPicker.Changed = Func
-            -- Library:SafeCallback(Func, ColorPicker.Value, ColorPicker.Transparency);
         end
 
         if ParentObj.Addons then
@@ -2366,8 +2386,7 @@ do
             ColorPicker:SetHSVFromRGB(Color)
             ColorPicker:Display()
 
-            Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value, ColorPicker.Transparency)
-            Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value, ColorPicker.Transparency)
+            RunCallback()
         end
 
         function ColorPicker:SetValueRGB(Color, Transparency)
@@ -2375,8 +2394,7 @@ do
             ColorPicker:SetHSVFromRGB(Color)
             ColorPicker:Display()
 
-            Library:SafeCallback(ColorPicker.Callback, ColorPicker.Value, ColorPicker.Transparency)
-            Library:SafeCallback(ColorPicker.Changed, ColorPicker.Value, ColorPicker.Transparency)
+            RunCallback()
         end
 
         HueBox.FocusLost:Connect(function(enter)
@@ -2416,6 +2434,8 @@ do
                     ColorPicker.Vib = 1 - ((MouseY - MinY) / (MaxY - MinY))
                     ColorPicker:Display()
 
+                    RunCallback()
+
                     RunService.RenderStepped:Wait()
                 end
 
@@ -2432,6 +2452,8 @@ do
 
                     ColorPicker.Hue = ((MouseY - MinY) / (MaxY - MinY))
                     ColorPicker:Display()
+
+                    RunCallback()
 
                     RunService.RenderStepped:Wait()
                 end
@@ -2467,8 +2489,9 @@ do
                         local MouseX = math.clamp(Mouse.X, MinX, MaxX)
 
                         ColorPicker.Transparency = 1 - ((MouseX - MinX) / (MaxX - MinX))
-
                         ColorPicker:Display()
+
+                        RunCallback()
 
                         RunService.RenderStepped:Wait()
                     end

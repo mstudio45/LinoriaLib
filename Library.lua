@@ -7892,7 +7892,7 @@ end
     local Toggled = false
     local Fading = false
     
-    function Library:Toggle(Toggling)
+    function Window:Toggle(Toggling)
         if typeof(Toggling) == "boolean" and Toggling == Toggled then return end
         if Fading then return end
 
@@ -8004,6 +8004,10 @@ end
         task.wait(FadeTime)
         Outer.Visible = Toggled
         Fading = false
+    end
+
+    function Library:Toggle(Toggling)
+        return Window:Toggle(Toggling)
     end
 
     Library:GiveSignal(InputService.InputBegan:Connect(function(Input, Processed) -- :sob:

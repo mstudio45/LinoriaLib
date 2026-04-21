@@ -1,3 +1,8 @@
+## 21.04.2026
+```diff
++ SaveManager:SetLoadingOrder(enabled: boolean, order: { })
+```
+
 ## 13.12.2025
 ```diff
 + SyncToggleState KeyPickers can now use Hold Mode

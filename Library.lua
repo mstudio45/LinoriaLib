@@ -300,6 +300,7 @@ local Library = {
     ActiveDialog = nil;
 
     ImageManager = CustomImageManager;
+    ShowCursorBinding = string.sub(tostring({}), 10);
 }
 
 if RunService:IsStudio() then
@@ -7923,8 +7924,9 @@ end
                     CursorOutline.Visible = Library.ShowCustomCursor
                     
                     local OldMouseIconState = InputService.MouseIconEnabled
-                    pcall(function() RunService:UnbindFromRenderStep("LinoriaCursor") end)
-                    RunService:BindToRenderStep("LinoriaCursor", Enum.RenderPriority.Camera.Value - 1, function()
+                    local ShowCursorBinding = Library.ShowCursorBinding
+                    pcall(function() RunService:UnbindFromRenderStep(ShowCursorBinding) end)
+                    RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Camera.Value - 1, function()
                         InputService.MouseIconEnabled = not Library.ShowCustomCursor
                         local mPos = InputService:GetMouseLocation()
                         local X, Y = mPos.X, mPos.Y
@@ -7942,7 +7944,7 @@ end
                             InputService.MouseIconEnabled = OldMouseIconState
                             if Cursor then Cursor:Destroy() end
                             if CursorOutline then CursorOutline:Destroy() end
-                            RunService:UnbindFromRenderStep("LinoriaCursor")
+                            RunService:UnbindFromRenderStep(ShowCursorBinding)
                         end
                     end)
                 end))

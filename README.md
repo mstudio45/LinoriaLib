@@ -1,6 +1,6 @@
 > [!IMPORTANT]  
 > This is a (somewhat) maintained fork of LinoriaLib. This is not the original LinoriaLib repository.<br />
-> Changelogs: [Changelogs](CHANGELOG.md)
+> Changelogs: [Changelogs](CHANGELOG.md)<br />
 > The repo might get archived at some point since I'm more focused on the [Obsidian](https://github.com/deividcomsono/Obsidian) UI Library now.
 
 # LinoriaLib

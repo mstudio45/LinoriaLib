@@ -1,6 +1,7 @@
 > [!IMPORTANT]  
-> This is a maintained fork of LinoriaLib. This is not the original LinoriaLib repository.<br />
+> This is a (somewhat) maintained fork of LinoriaLib. This is not the original LinoriaLib repository.<br />
 > Changelogs: [Changelogs](CHANGELOG.md)
+> The repo might get archived at some point since I'm more focused on the [Obsidian](https://github.com/deividcomsono/Obsidian) UI Library now.
 
 # LinoriaLib
 A Roblox UI library inspired by Splix, BBot and many others.

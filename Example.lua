@@ -1,25 +1,11 @@
---[[
-                                              _                                 
-                    __      ____ _ _ __ _ __ (_)_ __   __ _                     
-                    \ \ /\ / / _` | '__| '_ \| | '_ \ / _` |                    
-                     \ V  V / (_| | |  | | | | | | | | (_| |                    
-                      \_/\_/ \__,_|_|  |_| |_|_|_| |_|\__, |                    
-                                                      |___/                     
-      this example file is missing a lot of stuff and its pretty outdated       
-               i recommend using the documentation for Obsidian:                
-                        https://docs.mspaint.cc/obsidian                        
-                                                                                
-              a lot of stuff is very similar but it's not the same              
-                you can look through the source code of Linoria                 
-                                                                                
-                if anyone wants to expand on this example script                
-                       make an pull request or something                        
-                                                                                
+--[[   
+                  A forked and modded version of Linoria Library.
+				            A Roblox UI Library
                        Original example (mady by wally):                        
       https://github.com/violin-suzutsuki/LinoriaLib/blob/main/Example.lua                
 --]]
 
-local repo = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/"
+local repo = "https://raw.githubusercontent.com/visnoukkk/LinoriaLib/main/"
 
 local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
@@ -27,7 +13,6 @@ local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
 local Options = Library.Options
 local Toggles = Library.Toggles
-
 Library.ShowToggleFrameInKeybinds = true -- Make toggle keybinds work inside the keybinds UI (aka adds a toggle to the UI). Good for mobile users (Default value = true)
 Library.ShowCustomCursor = true -- Toggles the Linoria cursor globaly (Default value = true)
 Library.NotifySide = "Left" -- Changes the side of the notifications globaly (Left, Right) (Default value = Left)
@@ -42,7 +27,7 @@ local Window = Library:CreateWindow({
 	-- Position and Size are also valid options here
 	-- but you do not need to define them unless you are changing them :)
 
-	Title = "Example menu",
+	Title = "Example menu", -- Name For UI
 	Center = true,
 	AutoShow = true,
 	Resizable = true,
@@ -52,6 +37,35 @@ local Window = Library:CreateWindow({
 	TabPadding = 8,
 	MenuFadeTime = 0.2
 })
+
+-- Center the title text and add a game name text on the right side
+task.spawn(function()
+	pcall(function()
+		local windowMain = Window.Holder or Window.MainFrame or Window.Frame
+		if windowMain then
+			for _, descendant in ipairs(windowMain:GetDescendants()) do
+				if descendant:IsA("TextLabel") and descendant.Text == "Example menu" then
+					-- Center the main title
+					descendant.TextXAlignment = Enum.TextXAlignment.Center
+					descendant.Size = UDim2.new(1, 0, descendant.Size.Y.Scale, descendant.Size.Y.Offset)
+					
+					-- Create a game name label on the right side
+					local gameNameLabel = Instance.new("TextLabel")
+					gameNameLabel.Name = "GameNameLabel"
+					gameNameLabel.BackgroundTransparency = 1
+					gameNameLabel.Position = UDim2.new(1, -110, 0, 0)
+					gameNameLabel.Size = UDim2.new(0, 100, 1, 0)
+					gameNameLabel.Font = descendant.Font
+					gameNameLabel.Text = "Game Name" -- Name Game
+					gameNameLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+					gameNameLabel.TextSize = descendant.TextSize
+					gameNameLabel.TextXAlignment = Enum.TextXAlignment.Right
+					gameNameLabel.Parent = descendant
+				end
+			end
+		end
+	end)
+end)
 
 -- CALLBACK NOTE:
 -- Passing in callback functions via the initial element parameters (i.e. Callback = function(Value)...) works
